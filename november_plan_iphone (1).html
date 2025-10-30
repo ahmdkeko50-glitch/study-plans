@@ -1,0 +1,1011 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <title>الخطة الدراسية الشهرية - نوفمبر 2025</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #08798c 0%, #065967 100%);
+            color: white;
+            padding: 15px;
+            line-height: 1.6;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+            overflow-x: hidden;
+        }
+        
+        .container {
+            max-width: 100%;
+            margin: 0 auto;
+            padding-bottom: 20px;
+        }
+        
+        .header {
+            text-align: center;
+            padding: 25px 15px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 15px;
+            margin-bottom: 20px;
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+        }
+        
+        .header h1 {
+            font-size: 24px;
+            margin-bottom: 8px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+        
+        .header p {
+            font-size: 18px;
+            color: #ffd700;
+        }
+        
+        .section {
+            background: rgba(255,255,255,0.15);
+            padding: 20px;
+            margin-bottom: 15px;
+            border-radius: 15px;
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        }
+        
+        .section h2 {
+            font-size: 22px;
+            margin-bottom: 15px;
+            color: #ffd700;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            cursor: pointer;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+        
+        .section h3 {
+            font-size: 18px;
+            margin: 15px 0 10px 0;
+            color: #ffd700;
+        }
+        
+        .section p, .section li {
+            font-size: 16px;
+            margin: 8px 0;
+        }
+        
+        .week-box {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            margin: 15px 0;
+        }
+        
+        .week-card {
+            background: rgba(255,255,255,0.2);
+            padding: 18px;
+            border-radius: 12px;
+            text-align: center;
+            border: 2px solid transparent;
+            cursor: pointer;
+            user-select: none;
+            -webkit-user-select: none;
+            transition: all 0.3s ease;
+        }
+        
+        .week-card:active {
+            transform: scale(0.98);
+            background: rgba(255,255,255,0.25);
+        }
+        
+        .week-card.completed {
+            background: rgba(0,255,0,0.2);
+            border-color: #00ff00;
+        }
+        
+        .week-card h3 {
+            font-size: 20px;
+            margin-bottom: 8px;
+            color: white;
+        }
+        
+        .week-card p {
+            font-size: 15px;
+            color: rgba(255,255,255,0.9);
+            margin: 5px 0;
+        }
+        
+        .info-box {
+            background: rgba(255,215,0,0.2);
+            padding: 15px;
+            border-radius: 12px;
+            border-right: 4px solid #ffd700;
+            margin: 15px 0;
+        }
+        
+        .info-box p {
+            margin: 6px 0;
+        }
+        
+        ul {
+            padding-right: 25px;
+            margin: 12px 0;
+        }
+        
+        li {
+            margin: 6px 0;
+        }
+        
+        .progress-tracker {
+            margin: 20px 0;
+            padding: 20px;
+            background: rgba(255,255,255,0.15);
+            border-radius: 15px;
+        }
+        
+        .progress-tracker h3 {
+            margin-bottom: 15px;
+            color: #ffd700;
+        }
+        
+        .progress-bar-container {
+            background: rgba(0,0,0,0.3);
+            height: 30px;
+            border-radius: 15px;
+            overflow: hidden;
+            margin: 12px 0;
+        }
+        
+        .progress-bar {
+            height: 100%;
+            background: linear-gradient(90deg, #ffd700, #ffed4e);
+            width: 0%;
+            transition: width 1s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            color: #08798c;
+            font-size: 14px;
+        }
+        
+        .checklist {
+            margin: 15px 0;
+        }
+        
+        .checklist-item {
+            background: rgba(255,255,255,0.1);
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            cursor: pointer;
+            user-select: none;
+            -webkit-user-select: none;
+            transition: all 0.2s ease;
+        }
+        
+        .checklist-item:active {
+            transform: scale(0.98);
+            background: rgba(255,255,255,0.15);
+        }
+        
+        .checklist-item.checked {
+            background: rgba(0,255,0,0.2);
+            opacity: 0.7;
+        }
+        
+        .checklist-item.checked p {
+            text-decoration: line-through;
+        }
+        
+        .checkbox {
+            min-width: 24px;
+            width: 24px;
+            height: 24px;
+            border: 2px solid white;
+            border-radius: 5px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+        
+        .checklist-item.checked .checkbox {
+            background: #00ff00;
+            border-color: #00ff00;
+        }
+        
+        .checkbox::after {
+            content: '✓';
+            display: none;
+            color: #08798c;
+            font-weight: bold;
+            font-size: 16px;
+        }
+        
+        .checklist-item.checked .checkbox::after {
+            display: block;
+        }
+        
+        .btn {
+            background: #ffd700;
+            color: #08798c;
+            padding: 14px 25px;
+            border: none;
+            border-radius: 25px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            margin: 8px 4px;
+            width: calc(50% - 8px);
+            display: inline-block;
+            text-align: center;
+            transition: all 0.2s ease;
+            -webkit-appearance: none;
+        }
+        
+        .btn:active {
+            transform: scale(0.95);
+            background: #ffed4e;
+        }
+        
+        .btn-full {
+            width: calc(100% - 8px);
+        }
+        
+        .collapsible-content {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease;
+        }
+        
+        .collapsible-content.active {
+            max-height: 5000px;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background: rgba(255,255,255,0.1);
+            border-radius: 12px;
+            overflow: hidden;
+            margin: 15px 0;
+            font-size: 13px;
+        }
+        
+        th, td {
+            padding: 10px 5px;
+            text-align: center;
+            border: 1px solid rgba(255,255,255,0.3);
+        }
+        
+        th {
+            background: rgba(255,255,255,0.25);
+            font-weight: bold;
+            font-size: 14px;
+        }
+        
+        td.highlight {
+            background: rgba(255, 215, 0, 0.4);
+            font-weight: bold;
+            border: 2px solid #ffd700;
+        }
+        
+        td.today {
+            background: rgba(255, 100, 100, 0.4);
+            border: 2px solid #ff6464;
+            font-weight: bold;
+        }
+        
+        .timer {
+            background: rgba(0,0,0,0.3);
+            padding: 20px;
+            border-radius: 12px;
+            text-align: center;
+            margin: 15px 0;
+        }
+        
+        .timer h3 {
+            margin-bottom: 12px;
+            color: #ffd700;
+        }
+        
+        .timer-display {
+            font-size: 42px;
+            font-weight: bold;
+            color: #ffd700;
+            margin: 15px 0;
+        }
+        
+        .notes-section {
+            margin: 15px 0;
+        }
+        
+        .notes-section textarea {
+            width: 100%;
+            min-height: 120px;
+            background: rgba(0,0,0,0.3);
+            border: 2px solid rgba(255,255,255,0.3);
+            border-radius: 10px;
+            color: white;
+            padding: 12px;
+            font-size: 15px;
+            font-family: inherit;
+            resize: vertical;
+            -webkit-appearance: none;
+        }
+        
+        .notes-section textarea:focus {
+            outline: none;
+            border-color: #ffd700;
+        }
+        
+        .intro-icon {
+            font-size: 60px;
+            margin-bottom: 15px;
+        }
+        
+        .action-buttons {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin: 15px 0;
+        }
+        
+        /* iOS specific fixes */
+        input, textarea, button {
+            -webkit-appearance: none;
+            -moz-appearance: none;
+            appearance: none;
+        }
+        
+        /* Smooth scrolling */
+        html {
+            scroll-behavior: smooth;
+            -webkit-overflow-scrolling: touch;
+        }
+        
+        /* Remove iOS blue highlight */
+        * {
+            -webkit-tap-highlight-color: rgba(0,0,0,0);
+            -webkit-touch-callout: none;
+        }
+        
+        /* Make text selectable only where needed */
+        p, li, h1, h2, h3 {
+            -webkit-user-select: text;
+            user-select: text;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <div class="header">
+            <div class="intro-icon">📚</div>
+            <h1>الخطة الدراسية الشهرية لطلاب الانتساب</h1>
+            <p>نوفمبر 2025</p>
+        </div>
+        
+        <!-- Progress Tracker -->
+        <div class="section">
+            <h3>📊 تقدم الشهر</h3>
+            <div class="progress-bar-container">
+                <div class="progress-bar" id="progressBar">0%</div>
+            </div>
+            <p style="text-align: center; margin-top: 8px; font-size: 14px;">اكمل المهام لزيادة التقدم!</p>
+        </div>
+        
+        <!-- Weeks Overview -->
+        <div class="section">
+            <h2>📅 الأسابيع الدراسية</h2>
+            <div class="week-box">
+                <div class="week-card" onclick="markComplete(this)">
+                    <h3>الأسبوع الأول</h3>
+                    <p>📆 1-7 نوفمبر</p>
+                    <p>📌 نشر ومتابعة نصف الفصل الأول</p>
+                    <p style="font-size: 13px; margin-top: 8px; color: #ffd700;">اضغط للتعليم كمكتمل</p>
+                </div>
+                
+                <div class="week-card" onclick="markComplete(this)">
+                    <h3>الأسبوع الثاني</h3>
+                    <p>📆 8-14 نوفمبر</p>
+                    <p>📌 نشر الفصل الأول + مراجعة</p>
+                    <p style="font-size: 13px; margin-top: 8px; color: #ffd700;">اضغط للتعليم كمكتمل</p>
+                </div>
+                
+                <div class="week-card" onclick="markComplete(this)">
+                    <h3>الأسبوع الثالث</h3>
+                    <p>📆 15-21 نوفمبر</p>
+                    <p>📌 نشر الفصل الثاني (النصف الأول)</p>
+                    <p style="font-size: 13px; margin-top: 8px; color: #ffd700;">اضغط للتعليم كمكتمل</p>
+                </div>
+                
+                <div class="week-card" onclick="markComplete(this)">
+                    <h3>الأسبوع الرابع</h3>
+                    <p>📆 22-28 نوفمبر</p>
+                    <p>📌 مراجعة شاملة + الامتحان</p>
+                    <p style="font-size: 13px; margin-top: 8px; color: #ffd700;">اضغط للتعليم كمكتمل</p>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Week 1 Details -->
+        <div class="section">
+            <h2 onclick="toggleSection('week1')">📖 الأسبوع الأول ▼</h2>
+            <div id="week1" class="collapsible-content active">
+                <div class="info-box">
+                    <h3>📅 التواريخ: 1-7 نوفمبر</h3>
+                </div>
+                
+                <h3>📚 المهام الأسبوعية:</h3>
+                <div class="info-box">
+                    <p><strong>نشر ومتابعة نصف الفصل الأول</strong></p>
+                </div>
+                
+                <h3>📝 نوع التقييم:</h3>
+                <div class="info-box">
+                    <p><strong>أسئلة قصيرة للمراجعة الفصل</strong></p>
+                </div>
+                
+                <h3>🎯 النشاط الأسبوعي:</h3>
+                <div class="info-box">
+                    <p><strong>(5 أسئلة من الأسئلة الوزارية)</strong></p>
+                </div>
+                
+                <div class="info-box" style="background: rgba(255,215,0,0.3); border-color: #ffd700;">
+                    <h3>🌟 جانب التحفيز:</h3>
+                    <p><strong>فيديو تحفيزي (البدء بخطوة صغيرة)</strong></p>
+                </div>
+                
+                <h3>✅ قائمة المهام:</h3>
+                <div class="checklist">
+                    <div class="checklist-item" onclick="toggleCheck(this)">
+                        <div class="checkbox"></div>
+                        <p>دراسة نصف الفصل الأول (4-1)</p>
+                    </div>
+                    <div class="checklist-item" onclick="toggleCheck(this)">
+                        <div class="checkbox"></div>
+                        <p>حل الأسئلة القصيرة (5)</p>
+                    </div>
+                    <div class="checklist-item" onclick="toggleCheck(this)">
+                        <div class="checkbox"></div>
+                        <p>حل 5 أسئلة وزارية (6)</p>
+                    </div>
+                    <div class="checklist-item" onclick="toggleCheck(this)">
+                        <div class="checkbox"></div>
+                        <p>مشاهدة الفيديو التحفيزي (7)</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Week 2 Details -->
+        <div class="section">
+            <h2 onclick="toggleSection('week2')">📖 الأسبوع الثاني ▼</h2>
+            <div id="week2" class="collapsible-content active">
+                <div class="info-box">
+                    <h3>📅 التواريخ: 8-14 نوفمبر</h3>
+                </div>
+                
+                <h3>📚 المهام الأسبوعية:</h3>
+                <div class="info-box">
+                    <p><strong>نشر الفصل الأول بالكامل + مراجعة مركزة</strong></p>
+                </div>
+                
+                <h3>📝 نوع التقييم:</h3>
+                <div class="info-box" style="background: rgba(255,100,100,0.3); border-color: #ff6464;">
+                    <p><strong>اختبار اختياري (اختيارات متعددة) يغطي الفصل الأول فقط</strong></p>
+                </div>
+                
+                <h3>🎯 النشاط الأسبوعي:</h3>
+                <div class="info-box">
+                    <p><strong>مراجعة تفاعلية وتسليط الضوء على الأسئلة الوزارية</strong></p>
+                </div>
+                
+                <h3>✅ قائمة المهام:</h3>
+                <div class="checklist">
+                    <div class="checklist-item" onclick="toggleCheck(this)">
+                        <div class="checkbox"></div>
+                        <p>دراسة الفصل الأول كاملاً (11-8)</p>
+                    </div>
+                    <div class="checklist-item" onclick="toggleCheck(this)">
+                        <div class="checkbox"></div>
+                        <p>أداء الاختبار الاختياري (12)</p>
+                    </div>
+                    <div class="checklist-item" onclick="toggleCheck(this)">
+                        <div class="checkbox"></div>
+                        <p>المشاركة في المراجعة التفاعلية (13)</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Week 3 Details -->
+        <div class="section">
+            <h2 onclick="toggleSection('week3')">📖 الأسبوع الثالث ▼</h2>
+            <div id="week3" class="collapsible-content active">
+                <div class="info-box">
+                    <h3>📅 التواريخ: 15-21 نوفمبر</h3>
+                </div>
+                
+                <h3>📚 المهام الأسبوعية:</h3>
+                <div class="info-box">
+                    <p><strong>نشر الفصل الثاني (النصف الأول)</strong></p>
+                </div>
+                
+                <h3>🎯 النشاط الأسبوعي:</h3>
+                <div class="info-box">
+                    <p><strong>اختبار متعدد من الأسئلة الإثرائية لتعزيز الفهم</strong></p>
+                </div>
+                
+                <div class="info-box" style="background: rgba(255,215,0,0.3); border-color: #ffd700;">
+                    <h3>💡 جانب التحفيز:</h3>
+                    <p><strong>(كيفية تنظيم الوقت والمذاكرة الذكية)</strong></p>
+                </div>
+                
+                <h3>✅ قائمة المهام:</h3>
+                <div class="checklist">
+                    <div class="checklist-item" onclick="toggleCheck(this)">
+                        <div class="checkbox"></div>
+                        <p>دراسة النصف الأول من الفصل الثاني (18-15)</p>
+                    </div>
+                    <div class="checklist-item" onclick="toggleCheck(this)">
+                        <div class="checkbox"></div>
+                        <p>حل الاختبار الإثرائي (20)</p>
+                    </div>
+                    <div class="checklist-item" onclick="toggleCheck(this)">
+                        <div class="checkbox"></div>
+                        <p>مشاهدة ورشة تنظيم الوقت (21)</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Week 4 Details -->
+        <div class="section">
+            <h2 onclick="toggleSection('week4')">📖 الأسبوع الرابع ▼</h2>
+            <div id="week4" class="collapsible-content active">
+                <div class="info-box">
+                    <h3>📅 التواريخ: 22-28 نوفمبر</h3>
+                </div>
+                
+                <h3>📚 المهام الأسبوعية:</h3>
+                <div class="info-box">
+                    <p><strong>مراجعة شاملة للفصل الأول والنصف الأول من الفصل الثاني</strong></p>
+                </div>
+                
+                <h3>📝 نوع التقييم:</h3>
+                <div class="info-box" style="background: rgba(255,50,50,0.4); border-color: #ff3232;">
+                    <p><strong>امتحان شامل لشهر 11 (اختياري) اختيارات متعددة</strong></p>
+                </div>
+                
+                <h3>🎯 النشاط الأسبوعي:</h3>
+                <div class="info-box">
+                    <p><strong>مراجعة ختامية للأسئلة الوزارية الخاصة بالفصل الأول</strong></p>
+                </div>
+                
+                <h3>✅ قائمة المهام:</h3>
+                <div class="checklist">
+                    <div class="checklist-item" onclick="toggleCheck(this)">
+                        <div class="checkbox"></div>
+                        <p>مراجعة شاملة (25-22)</p>
+                    </div>
+                    <div class="checklist-item" onclick="toggleCheck(this)">
+                        <div class="checkbox"></div>
+                        <p>أداء الامتحان الشامل (26)</p>
+                    </div>
+                    <div class="checklist-item" onclick="toggleCheck(this)">
+                        <div class="checkbox"></div>
+                        <p>المراجعة الختامية (27)</p>
+                    </div>
+                </div>
+                
+                <div class="info-box" style="background: rgba(255,215,0,0.2); border-color: #ffd700;">
+                    <h3>📊 ملاحظة مهمة:</h3>
+                    <p>هذا الامتحان يغطي:</p>
+                    <ul>
+                        <li>✅ الفصل الأول كاملاً</li>
+                        <li>✅ النصف الأول من الفصل الثاني</li>
+                        <li>📊 70% أسئلة وزارية</li>
+                        <li>✍️ 30% أسئلة مقالية</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Exams Summary -->
+        <div class="section">
+            <h2>📝 ملخص الاختبارات</h2>
+            
+            <div class="info-box">
+                <h3>كل أسبوعين:</h3>
+                <p>اختبار اختياري نوع خيارات متعددة 15–20 سؤال.</p>
+            </div>
+            
+            <div class="info-box" style="background: rgba(255,50,50,0.3); border-color: #ff3232;">
+                <h3>نهاية الشهر: امتحان شامل يغطي:</h3>
+                <ul>
+                    <li>الفصل الأول كاملًا + نصف الثاني</li>
+                    <li>70% أسئلة وزارية (خيارات متعددة)</li>
+                    <li>30% أسئلة مقالية</li>
+                </ul>
+            </div>
+            
+            <h3>🗓️ كل خميس:</h3>
+            <p>نشاط تقييم ذاتي. و وزاريات الفصل</p>
+            
+            <div class="checklist">
+                <div class="checklist-item" onclick="toggleCheck(this)">
+                    <div class="checkbox"></div>
+                    <p>الخميس 6 نوفمبر - وزاريات</p>
+                </div>
+                <div class="checklist-item" onclick="toggleCheck(this)">
+                    <div class="checkbox"></div>
+                    <p>الخميس 13 نوفمبر - مراجعة</p>
+                </div>
+                <div class="checklist-item" onclick="toggleCheck(this)">
+                    <div class="checkbox"></div>
+                    <p>الخميس 20 نوفمبر - اثرائيات</p>
+                </div>
+                <div class="checklist-item" onclick="toggleCheck(this)">
+                    <div class="checkbox"></div>
+                    <p>الخميس 27 نوفمبر - وزاريات</p>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Motivation Section -->
+        <div class="section">
+            <h2>🌟 جانب التحفيز والتنمية البشرية</h2>
+            
+            <div class="info-box">
+                <h3>(1): بداية الشهر</h3>
+                <p>كسر الملل والبدء بخطوة صغيرة.</p>
+                <p style="margin-top: 12px; font-size: 15px; color: #ffd700;">
+                    💪 ابدأ بـ 15 دقيقة دراسة يومياً!
+                </p>
+            </div>
+            
+            <div class="info-box">
+                <h3>(2): منتصف الشهر</h3>
+                <p>كيفية تنظيم الوقت والمذاكرة الذكية.</p>
+                <p style="margin-top: 12px; font-size: 15px; color: #ffd700;">
+                    ⏰ تقنية بومودورو: 25 دقيقة دراسة + 5 راحة!
+                </p>
+            </div>
+        </div>
+        
+        <!-- Study Timer -->
+        <div class="section">
+            <h2>⏱️ مؤقت الدراسة</h2>
+            <div class="timer">
+                <h3>مؤقت بومودورو</h3>
+                <div class="timer-display" id="timerDisplay">25:00</div>
+                <div class="action-buttons">
+                    <button class="btn" onclick="startTimer()">ابدأ ▶️</button>
+                    <button class="btn" onclick="pauseTimer()">توقف ⏸️</button>
+                </div>
+                <button class="btn btn-full" onclick="resetTimer()">إعادة تعيين 🔄</button>
+            </div>
+        </div>
+        
+        <!-- Calendar -->
+        <div class="section">
+            <h2 onclick="toggleSection('calendar')">📆 تقويم نوفمبر 2025 ▼</h2>
+            <div id="calendar" class="collapsible-content active">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>سبت</th>
+                            <th>أحد</th>
+                            <th>اثنين</th>
+                            <th>ثلاثاء</th>
+                            <th>أربعاء</th>
+                            <th>خميس</th>
+                            <th>جمعة</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>1</td>
+                            <td>2</td>
+                            <td>3</td>
+                            <td>4</td>
+                            <td>5</td>
+                            <td class="highlight">6<br><small>وزاريات</small></td>
+                            <td>7</td>
+                        </tr>
+                        <tr>
+                            <td>8</td>
+                            <td>9</td>
+                            <td>10</td>
+                            <td>11</td>
+                            <td>12</td>
+                            <td class="highlight">13<br><small>مراجعة</small></td>
+                            <td>14</td>
+                        </tr>
+                        <tr>
+                            <td>15</td>
+                            <td>16</td>
+                            <td>17</td>
+                            <td>18</td>
+                            <td>19</td>
+                            <td class="highlight">20<br><small>اثرائيات</small></td>
+                            <td>21</td>
+                        </tr>
+                        <tr>
+                            <td>22</td>
+                            <td>23</td>
+                            <td>24</td>
+                            <td>25</td>
+                            <td>26</td>
+                            <td class="highlight">27<br><small>وزاريات</small></td>
+                            <td>28</td>
+                        </tr>
+                        <tr>
+                            <td>29</td>
+                            <td>30</td>
+                            <td style="background: rgba(0,0,0,0.2);"></td>
+                            <td style="background: rgba(0,0,0,0.2);"></td>
+                            <td style="background: rgba(0,0,0,0.2);"></td>
+                            <td style="background: rgba(0,0,0,0.2);"></td>
+                            <td style="background: rgba(0,0,0,0.2);"></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        
+        <!-- Study Tips -->
+        <div class="section">
+            <h2 onclick="toggleSection('tips')">💡 نصائح للدراسة ▼</h2>
+            <div id="tips" class="collapsible-content">
+                <ul>
+                    <li>📖 اقرأ المادة بتركيز قبل حل التمارين</li>
+                    <li>✍️ اكتب ملخصات بخط يدك</li>
+                    <li>🔄 راجع المادة القديمة بانتظام</li>
+                    <li>👥 ادرس مع مجموعة للمناقشة</li>
+                    <li>⏰ التزم بجدول دراسي ثابت</li>
+                    <li>💤 احصل على نوم كافٍ (7-8 ساعات)</li>
+                    <li>🥗 تناول طعاماً صحياً</li>
+                    <li>🎯 ضع أهدافاً صغيرة وحققها</li>
+                </ul>
+            </div>
+        </div>
+        
+        <!-- Personal Notes -->
+        <div class="section">
+            <h2>📝 ملاحظاتي الشخصية</h2>
+            <div class="notes-section">
+                <textarea id="personalNotes" placeholder="اكتب ملاحظاتك هنا..."></textarea>
+                <div class="action-buttons">
+                    <button class="btn" onclick="saveNotes()">💾 حفظ</button>
+                    <button class="btn" onclick="clearNotes()">🗑️ مسح</button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Quick Actions -->
+        <div class="section">
+            <h2>⚡ إجراءات سريعة</h2>
+            <div class="action-buttons">
+                <button class="btn" onclick="resetAll()">🔄 إعادة تعيين</button>
+                <button class="btn" onclick="shareProgress()">📤 مشاركة</button>
+            </div>
+        </div>
+        
+        <!-- Footer -->
+        <div style="text-align: center; padding: 20px 0; color: rgba(255,255,255,0.7);">
+            <p>🎓 بالتوفيق في دراستك!</p>
+            <p style="font-size: 13px; margin-top: 8px;">© 2025 - الخطة الدراسية</p>
+        </div>
+    </div>
+
+    <script>
+        // Initialize
+        loadData();
+        updateProgress();
+        highlightToday();
+        
+        // Timer variables
+        let timerInterval;
+        let timeLeft = 25 * 60;
+        let isRunning = false;
+        
+        // Timer functions
+        function startTimer() {
+            if (!isRunning) {
+                isRunning = true;
+                timerInterval = setInterval(() => {
+                    timeLeft--;
+                    updateTimerDisplay();
+                    
+                    if (timeLeft <= 0) {
+                        pauseTimer();
+                        if (confirm('⏰ انتهى وقت الدراسة! خذ استراحة 5 دقائق؟')) {
+                            timeLeft = 5 * 60;
+                            updateTimerDisplay();
+                        } else {
+                            resetTimer();
+                        }
+                    }
+                }, 1000);
+            }
+        }
+        
+        function pauseTimer() {
+            isRunning = false;
+            clearInterval(timerInterval);
+        }
+        
+        function resetTimer() {
+            pauseTimer();
+            timeLeft = 25 * 60;
+            updateTimerDisplay();
+        }
+        
+        function updateTimerDisplay() {
+            const minutes = Math.floor(timeLeft / 60);
+            const seconds = timeLeft % 60;
+            document.getElementById('timerDisplay').textContent = 
+                `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+        }
+        
+        // Week completion
+        function markComplete(element) {
+            element.classList.toggle('completed');
+            saveData();
+            updateProgress();
+        }
+        
+        // Checklist functions
+        function toggleCheck(element) {
+            element.classList.toggle('checked');
+            saveData();
+            updateProgress();
+        }
+        
+        // Toggle sections
+        function toggleSection(sectionId) {
+            const section = document.getElementById(sectionId);
+            section.classList.toggle('active');
+        }
+        
+        // Progress calculation
+        function updateProgress() {
+            const totalItems = document.querySelectorAll('.week-card, .checklist-item').length;
+            const completedItems = document.querySelectorAll('.week-card.completed, .checklist-item.checked').length;
+            const percentage = Math.round((completedItems / totalItems) * 100);
+            
+            const progressBar = document.getElementById('progressBar');
+            progressBar.style.width = percentage + '%';
+            progressBar.textContent = percentage + '%';
+        }
+        
+        // Notes functions
+        function saveNotes() {
+            const notes = document.getElementById('personalNotes').value;
+            localStorage.setItem('studyNotes', notes);
+            alert('✅ تم حفظ ملاحظاتك!');
+        }
+        
+        function clearNotes() {
+            if (confirm('هل أنت متأكد من مسح الملاحظات؟')) {
+                document.getElementById('personalNotes').value = '';
+                localStorage.removeItem('studyNotes');
+                alert('🗑️ تم مسح الملاحظات!');
+            }
+        }
+        
+        // Highlight today's date
+        function highlightToday() {
+            const today = new Date();
+            if (today.getMonth() === 10) { // November
+                const day = today.getDate();
+                const cells = document.querySelectorAll('td');
+                cells.forEach(cell => {
+                    if (cell.textContent.trim() === day.toString()) {
+                        cell.classList.add('today');
+                    }
+                });
+            }
+        }
+        
+        // Save and load data
+        function saveData() {
+            const weekCards = document.querySelectorAll('.week-card');
+            const checkItems = document.querySelectorAll('.checklist-item');
+            
+            const weekData = Array.from(weekCards).map(card => card.classList.contains('completed'));
+            const checkData = Array.from(checkItems).map(item => item.classList.contains('checked'));
+            
+            localStorage.setItem('weekProgress', JSON.stringify(weekData));
+            localStorage.setItem('checkProgress', JSON.stringify(checkData));
+        }
+        
+        function loadData() {
+            // Load notes
+            const savedNotes = localStorage.getItem('studyNotes');
+            if (savedNotes) {
+                document.getElementById('personalNotes').value = savedNotes;
+            }
+            
+            // Load progress
+            const weekData = JSON.parse(localStorage.getItem('weekProgress') || '[]');
+            const checkData = JSON.parse(localStorage.getItem('checkProgress') || '[]');
+            
+            const weekCards = document.querySelectorAll('.week-card');
+            weekCards.forEach((card, index) => {
+                if (weekData[index]) {
+                    card.classList.add('completed');
+                }
+            });
+            
+            const checkItems = document.querySelectorAll('.checklist-item');
+            checkItems.forEach((item, index) => {
+                if (checkData[index]) {
+                    item.classList.add('checked');
+                }
+            });
+        }
+        
+        // Quick actions
+        function shareProgress() {
+            const totalItems = document.querySelectorAll('.week-card, .checklist-item').length;
+            const completedItems = document.querySelectorAll('.week-card.completed, .checklist-item.checked').length;
+            const percentage = Math.round((completedItems / totalItems) * 100);
+            
+            const text = `لقد أكملت ${percentage}% من خطتي الدراسية لشهر نوفمبر! 📚✨`;
+            
+            if (navigator.share) {
+                navigator.share({
+                    title: 'تقدمي الدراسي',
+                    text: text
+                }).catch(() => {});
+            } else {
+                alert(text);
+            }
+        }
+        
+        function resetAll() {
+            if (confirm('هل أنت متأكد من إعادة تعيين كل التقدم؟')) {
+                localStorage.clear();
+                location.reload();
+            }
+        }
+        
+        // Auto-save notes
+        setInterval(() => {
+            const notes = document.getElementById('personalNotes').value;
+            if (notes) {
+                localStorage.setItem('studyNotes', notes);
+            }
+        }, 30000);
+        
+        // Prevent zoom on double tap for better iOS experience
+        let lastTouchEnd = 0;
+        document.addEventListener('touchend', function(event) {
+            const now = Date.now();
+            if (now - lastTouchEnd <= 300) {
+                event.preventDefault();
+            }
+            lastTouchEnd = now;
+        }, false);
+    </script>
+</body>
+</html>
