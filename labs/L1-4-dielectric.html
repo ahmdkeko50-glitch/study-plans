@@ -4676,8 +4676,8 @@ Lab.define({
     ];
     const stepDone = STEPS.map(() => false);
     ctx.section('خطوات التجربة', '🧭', 'tint');
-    const stepsNote = ctx.note('');
-    stepsNote.el.style.margin = '0';
+    // the steps list is a block of its own (not a p.note: the engine clamps every note to two lines)
+    const stepsNote = (() => { const n = ctx.note(''); const d = document.createElement('div'); d.className = 'steps'; d.style.margin = '0 0 8px'; n.el.replaceWith(d); return { el: d, set(h) { d.innerHTML = h; } }; })();
     ctx.buttons([['↺ ابدأ التجربة من جديد', () => { example(); stepDone.fill(false); flags.readT = 0; drawSteps(-1); }]]);
     let stepKey = '';
     function drawSteps(cur) {

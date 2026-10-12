@@ -43,7 +43,8 @@ original export to see every change below in context. Search for `v3` in the fil
 - One sentence per step, verb first, bold the action word ("**اسحب** العازل", "**المس** المفتاح").
 - Readout labels ≤ 4 words + the symbol (e.g. `الشحنة Q`, `السعة C`). The symbol must match the equation sheet.
 - Do not repeat the same instruction twice (intro paragraph + steps list). If the lesson has a "خطوات" section, the engine hides the "ماذا أفعل؟" paragraph automatically (it is still read by the guide dialog).
-- Keep long notes two lines (the engine clamps `p.note`; tap to expand).
+- Keep long notes two lines (the engine clamps every `p.note`; tap to expand).
+- **Never put the steps list inside `ctx.note()`**: it is a `p.note`, so the engine clamps it to two lines and only step 1 shows. Replace the note's element with a plain `<div class="steps">` (see `stepsNote` in 1-4).
 
 ---
 
