@@ -66,6 +66,8 @@ R['2-3'] = dict(
         dict(label='⬆ أبعِدهما', key='d', to=8)],                   # (placed right under the control `key`; `after` overrides)
   tapLabel=dict(handle='upper-plate', key='d', a=8, b=1.5,           # the ✋ label of that drag becomes a button that
                 textA='قرّب الصفيحتين', textB='أبعِد الصفيحتين'),   # toggles the slider between a and b, text follows state
+  patch=[['old source text', 'new source text']],   # exact one-off replacements inside the lesson script (build.py
+                                                   # asserts each old text occurs exactly once); not sent to the page
   doneText='…',                 # optional text under the list when every step is done
   steps=[                       # the guided checklist
     dict(t='<b>قرّب المغناطيس</b> إلى الملف …',   # one sentence, verb first, the action word in <b>
@@ -89,6 +91,11 @@ Writing rules for `steps`:
 - Keep `R[...]` labels exactly as the inventory prints them; renaming a readout breaks the step.
 
 A lesson that already ships its own "خطوات" section (e.g. 3-9 worked example) gets no `steps` key.
+
+**Gated drags.** Search the lesson script for `enabledFn:` on `ctx.drag(...)`. A drag that is enabled only in one mode
+(2-3: the coil only in «تحريك الملف»), or only after the prediction (6-3: the lamp), feels broken to the student. Use `patch`
+to remove the gate and switch the mode in `onStart` instead (see `R['2-3']`), or keep the mode switch visible in the main
+section when the gate is physically meaningful (8-6: absorbers exist only in radiography mode).
 
 ---
 

@@ -26,11 +26,13 @@ R['1-9'] = dict(heroRead=True, adv=['عناصر الدائرة'],
     dict(t='انتظر اكتمال الشحن: <span class="ltr">I = 0</span> و <span class="ltr">ΔV_C = ΔV</span>.', done="S.pos == 'a' && Math.abs(R['التيّار I']) < 0.01 * S.V / (S.Ru * 1e3)"),
     dict(t='<b>المس ذراع المفتاح</b> لتفتحه: الشحنة تبقى على الصفيحتين.', done="S.pos == 'open' && R['الشحنة Q = CΔV_C'] > 0.5 * S.Cu * 1e-6 * S.V", target='switch-handle', up=0.5)])
 R['2-3'] = dict(heroRead=True, adv=['الملف والمغناطيس'], advCtl=['حركة آليّة', 'سرعة الحركة الآليّة'],
+  patch=[["enabledFn: () => S.mode === 'magnet', onStart: () => { autoCtl(false); glideT = null; }", "onStart: () => { autoCtl(false); glideT = null; if (S.mode !== 'magnet') modeCtl.set('magnet'); }"],
+         ["ctx.drag(rig.coilG, { axis: [1, 0, 0], enabledFn: () => S.mode === 'coil', onStart: () => { autoCtl(false); glideT = null; }", "ctx.drag(rig.coilG, { axis: [1, 0, 0], hint: 'اسحب الملف', hintOffset: [0, 2.0, 0], onStart: () => { autoCtl(false); glideT = null; if (S.mode !== 'coil') modeCtl.set('coil'); }"]],
   steps=[
     dict(t='<b>قرّب المغناطيس</b> إلى الملف: اضغط «قرّب» أو اسحبه، وراقب مؤشّر الكلفانوميتر.', done="Math.abs(R['موقع المغناطيس بالنسبة للملف']) < 8", target='magnet-carrier'),
     dict(t='<b>اتركه ساكنًا</b> داخل الملف (اضغط «أوقفه في الوسط»): المؤشّر يعود إلى الصفر.', done="Math.abs(R['موقع المغناطيس بالنسبة للملف']) < 8 && Math.abs(R['السرعة النسبيّة v']) < 0.005 && t > 1.5"),
     dict(t='<b>أبعِد المغناطيس</b>: ينحرف المؤشّر بالاتّجاه المعاكس.', done="Math.abs(R['موقع المغناطيس بالنسبة للملف']) > 15"),
-    dict(t='اختر <b>«تحريك الملف»</b> وحرّك الملف نحو المغناطيس: النتيجة نفسها (الحركة النسبيّة هي المهمّة).', done="S.mode == 'coil' && Math.abs(R['السرعة النسبيّة v']) > 0.05", target='coil-assembly', up=2.2)])
+    dict(t='<b>اسحب الملف</b> نفسه نحو المغناطيس الساكن: النتيجة نفسها (الحركة النسبيّة هي المهمّة).', done="S.mode == 'coil' && Math.abs(R['السرعة النسبيّة v']) > 0.05", target='coil-assembly', up=2.2)])
 R['2-11'] = dict(scale=3, adv=['المغناطيس والصفيحتان'], mainCtl=['التصوير الحراريّ'], advCtl=['زاوية الإطلاق'],
   steps=[
     dict(t='اضغط <b>«أطلِقهما معًا»</b> (أو اسحب صفيحة جانبًا وأفلتها).', done='!isNaN(H)'),
@@ -110,6 +112,7 @@ R['5-7'] = dict(static=True, heroRead=True, adv=['الضوء'], hide=['θ = 45°
     dict(t='أدِر إلى <span class="ltr">θ = 60°</span>: ينفذ ربع الشدّة فقط.', done='Math.abs((((S.beta - S.alpha) % 180) + 180) % 180 - 60) < 4'),
     dict(t='أزِل <b>المستقطِب</b> من المسار: لا يتغيّر النافذ بتدوير المحلِّل (الضوء غير مستقطَب).', done='!S.usePol')])
 R['6-3'] = dict(heroRead=True, adv=['القياس والرسم', 'المعدن'], advCtl=['بُعد المصباح', 'نافذة الخلية'], hide=['ضوء أحمر على الصوديوم'],
+  patch=[["hintOffset: [0.9, -1.35, 0.7], enabledFn: () => pred.choice != null,", "hintOffset: [0.9, -1.35, 0.7],"]],
   steps=[
     dict(t='التردّد الآن أقلّ من عتبة الصوديوم: <b>لا تيّار</b>. ارفع <b>الشدّة</b> — لا شيء يتغيّر.', done='S.P != 40'),
     dict(t='ارفع <b>التردّد f</b> فوق f₀ (أدِر قرص التردّد): يظهر التيّار فجأة.', done='S.f > 0.6', target='frequency-drum'),
@@ -156,7 +159,7 @@ R['8-3'] = dict(heroRead=True, adv=['إثارة'], hide=['حدّ السلسلة'
     dict(t='اضغط <b>«⬇ نفّذ الانتقال»</b> من <span class="ltr">n = 3</span> إلى <span class="ltr">n = 2</span>: فوتون أحمر (خطّ Hα).', done="S.ni == 3 && S.nf == 2 && t > 2"),
     dict(t='اجعل <span class="ltr">n_i = 4</span> ونفّذ: فوتون أزرق (طاقة أكبر وطول موجيّ أقصر).', done='S.ni == 4 && S.nf == 2'),
     dict(t='اجعل <span class="ltr">n_f = 1</span> (سلسلة ليمان): فوق بنفسجيّ غير مرئيّ.', done='S.nf == 1')])
-R['8-6'] = dict(heroRead=True, adv=['التصوير الشعاعيّ'], advCtl=['شدّة تسخين', 'مادّة الهدف', 'الوضع'], hide=['ضع المؤشّر يسار λmin'],
+R['8-6'] = dict(heroRead=True, adv=['التصوير الشعاعيّ'], advCtl=['شدّة تسخين', 'مادّة الهدف'], hide=['ضع المؤشّر يسار λmin'],
   steps=[
     dict(t='شغّل <b>تسخين الفتيل</b> (المس المفتاح): تنطلق الإلكترونات وتظهر الأشعّة.', done='S.heat && t > 1'),
     dict(t='اقرأ <b>λmin</b> عند <span class="ltr">V = 50 kV</span>، ثمّ ارفع V (أدِر القرص): تقصر λmin.', done='S.V > 60', target='voltage-knob'),

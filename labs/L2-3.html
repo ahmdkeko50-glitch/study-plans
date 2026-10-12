@@ -4438,7 +4438,7 @@ window.Lab = {
 };
 })();
 </script>
-<script>window.LAB_SIMPLE = {"heroRead": true, "adv": ["الملف والمغناطيس"], "advCtl": ["حركة آليّة", "سرعة الحركة الآليّة"], "steps": [{"t": "<b>قرّب المغناطيس</b> إلى الملف: اضغط «قرّب» أو اسحبه، وراقب مؤشّر الكلفانوميتر.", "done": "Math.abs(R['موقع المغناطيس بالنسبة للملف']) < 8", "target": "magnet-carrier"}, {"t": "<b>اتركه ساكنًا</b> داخل الملف (اضغط «أوقفه في الوسط»): المؤشّر يعود إلى الصفر.", "done": "Math.abs(R['موقع المغناطيس بالنسبة للملف']) < 8 && Math.abs(R['السرعة النسبيّة v']) < 0.005 && t > 1.5"}, {"t": "<b>أبعِد المغناطيس</b>: ينحرف المؤشّر بالاتّجاه المعاكس.", "done": "Math.abs(R['موقع المغناطيس بالنسبة للملف']) > 15"}, {"t": "اختر <b>«تحريك الملف»</b> وحرّك الملف نحو المغناطيس: النتيجة نفسها (الحركة النسبيّة هي المهمّة).", "done": "S.mode == 'coil' && Math.abs(R['السرعة النسبيّة v']) > 0.05", "target": "coil-assembly", "up": 2.2}]};</script>
+<script>window.LAB_SIMPLE = {"heroRead": true, "adv": ["الملف والمغناطيس"], "advCtl": ["حركة آليّة", "سرعة الحركة الآليّة"], "steps": [{"t": "<b>قرّب المغناطيس</b> إلى الملف: اضغط «قرّب» أو اسحبه، وراقب مؤشّر الكلفانوميتر.", "done": "Math.abs(R['موقع المغناطيس بالنسبة للملف']) < 8", "target": "magnet-carrier"}, {"t": "<b>اتركه ساكنًا</b> داخل الملف (اضغط «أوقفه في الوسط»): المؤشّر يعود إلى الصفر.", "done": "Math.abs(R['موقع المغناطيس بالنسبة للملف']) < 8 && Math.abs(R['السرعة النسبيّة v']) < 0.005 && t > 1.5"}, {"t": "<b>أبعِد المغناطيس</b>: ينحرف المؤشّر بالاتّجاه المعاكس.", "done": "Math.abs(R['موقع المغناطيس بالنسبة للملف']) > 15"}, {"t": "<b>اسحب الملف</b> نفسه نحو المغناطيس الساكن: النتيجة نفسها (الحركة النسبيّة هي المهمّة).", "done": "S.mode == 'coil' && Math.abs(R['السرعة النسبيّة v']) > 0.05", "target": "coil-assembly", "up": 2.2}]};</script>
 <script>// @lesson 2-3
 // الدرس 2-3 الحث الكهرومغناطيسي — تجربتا أورستد وفاراداي، وتوليد التيّار المحثّ بتحريك المغناطيس داخل الملف.
 // وحدة المشهد: 1 وحدة = 5 cm. الفيزياء كلّها بالنظام الدولي (SI).
@@ -4864,8 +4864,8 @@ Lab.define({
       { q: 'قرّب القطب الشماليّ ثمّ أبعِده. لماذا انعكس الانحراف؟', a: 'عند التقريب يزداد الفيض، وعند الإبعاد يتناقص؛ فتنعكس إشارة ΔΦ/Δt وتنعكس معها القوّة الدافعة المحثّة واتّجاه التيّار. لاحظ القطب المتولّد على وجه الملف: يعاكس دائمًا التغيّر (قانون لنز).' }
     ]);
 
-    const hMag = ctx.drag(rig.magG, { axis: [1, 0, 0], hint: 'اسحب المغناطيس', hintOffset: [0, 0.75, 0], enabledFn: () => S.mode === 'magnet', onStart: () => { autoCtl(false); glideT = null; }, clamp: p => { p.x = Math.max(-6.2, Math.min(6.2, p.x)); p.y = rig.Y; p.z = 0; return p; } });
-    const hCoil = ctx.drag(rig.coilG, { axis: [1, 0, 0], enabledFn: () => S.mode === 'coil', onStart: () => { autoCtl(false); glideT = null; }, clamp: p => { p.x = Math.max(-5, Math.min(5, p.x)); p.y = 0; p.z = 0; return p; } });
+    const hMag = ctx.drag(rig.magG, { axis: [1, 0, 0], hint: 'اسحب المغناطيس', hintOffset: [0, 0.75, 0], onStart: () => { autoCtl(false); glideT = null; if (S.mode !== 'magnet') modeCtl.set('magnet'); }, clamp: p => { p.x = Math.max(-6.2, Math.min(6.2, p.x)); p.y = rig.Y; p.z = 0; return p; } });
+    const hCoil = ctx.drag(rig.coilG, { axis: [1, 0, 0], hint: 'اسحب الملف', hintOffset: [0, 2.0, 0], onStart: () => { autoCtl(false); glideT = null; if (S.mode !== 'coil') modeCtl.set('coil'); }, clamp: p => { p.x = Math.max(-5, Math.min(5, p.x)); p.y = 0; p.z = 0; return p; } });
     function autoCtl(b) { if (S.auto !== b) autoT.set(b); }
 
     ctx.label(rig.meter, 'الكلفانوميتر', { offset: [0, 1.35, 0], info: 'يكشف التيّار الصغير واتّجاهه. الصفر في منتصف التدريج؛ ينحرف المؤشّر يمينًا أو يسارًا بحسب اتّجاه التيّار.' });

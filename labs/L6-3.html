@@ -4663,7 +4663,7 @@ Lab.define({
     drumH.setAngle(fToAng(S.f));
     knobH = ctx.rotate(knob, { axis: [0, 1, 0], by: 'x', gain: 0.02, min: -5, max: 0, invert: true, hint: 'أدِر المقبض', hintOffset: [0, 0.55, 0], onMove: a => vCtl.set((S.dV < 0 ? -1 : 1) * Math.round(-a / 5 * 10 * 50) / 50) });
     knobH.setAngle(-Math.abs(S.dV) / 10 * 5);
-    ctx.drag(lamp, { axis: [1, 0, 0], target: lampBody, hint: 'اسحب المصباح', hintOffset: [0.9, -1.35, 0.7], enabledFn: () => pred.choice != null,
+    ctx.drag(lamp, { axis: [1, 0, 0], target: lampBody, hint: 'اسحب المصباح', hintOffset: [0.9, -1.35, 0.7],
       onStart: () => { if (pred.choice == null) ctx.flash('سجّل توقّعك أوّلًا', ''); },
       clamp: p => { p.x = Math.max(XC + D_MIN / 2, Math.min(XC + 24.5 / 2, p.x)); p.y = Y; p.z = 0; return p; },
       onMove: p => dCtl.set(Math.round((p.x - XC) * 2 * 10) / 10) });

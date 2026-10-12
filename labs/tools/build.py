@@ -22,6 +22,9 @@ for f in sorted(glob.glob(U + '/*.html')):
     em = engine_of(s); s = s[:em.start()] + E + s[em.end():]
     rec = recipes.R.get(code)
     if rec:
+        for old, new in rec.get('patch', []):   # small source fixes inside the lesson script
+            assert s.count(old) == 1, (code, old[:60]); s = s.replace(old, new)
+        rec = {k: v for k, v in rec.items() if k != 'patch'}
         block = '<script>window.LAB_SIMPLE = ' + json.dumps(rec, ensure_ascii=False) + ';</script>\n'
         i = s.index('<script>// @lesson'); s = s[:i] + block + s[i:]
     open(f'{out}/L{code}.html', 'w', encoding='utf-8').write(s)
