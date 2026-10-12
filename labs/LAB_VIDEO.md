@@ -17,8 +17,8 @@ What the student gets:
 - On a device without WebGL (no 3D at all) the video opens automatically.
 - Phone held sideways: the player never gets taller than the screen. Wide screens: video and captions side by side.
 
-Video quality: frames are rendered at 1920×1080 and downscaled to 1280×720 (supersampled, sharp labels), H.264 CRF 21,
-24 fps. About 1 MB per 10 seconds of video.
+Video quality: frames are rendered at 1920×1080 and downscaled to 1280×720 (supersampled, sharp labels), H.264 CRF 26 (tune animation),
+24 fps. About 1 MB per 10 seconds of video (lesson 1-4: 89 s, 9 MB).
 
 ---
 
@@ -39,7 +39,7 @@ Steps inside the script (they can be run one by one):
    1.35) and switches off the auto-quality governor so shadows stay on. The demo's caption box is hidden; captions, the
    question and the readings are written to `timeline.json` instead. Speed on a CPU-only machine: about 1 frame per second
    at 1080p (≈ 30 min for a 90-second demo). Use `960 540 24 1 1` for a quick draft (≈ 3 frames per second).
-2. **Encode** — `ffmpeg -framerate 24 -i frames/f%05d.jpg -vf scale=1280:720:flags=lanczos -c:v libx264 -profile:v main -level 3.1 -preset slow -crf 21 -pix_fmt yuv420p -movflags +faststart -an video.mp4`
+2. **Encode** — `ffmpeg -framerate 24 -i frames/f%05d.jpg -vf scale=1280:720:flags=lanczos -c:v libx264 -profile:v main -level 3.1 -preset slow -tune animation -crf 26 -pix_fmt yuv420p -movflags +faststart -an video.mp4`
 3. **Embed** — `python3 embed-video.py <lesson.html> video.mp4 poster.jpg frames/timeline.json <out.html>`
 
 ## Requirements on the lesson

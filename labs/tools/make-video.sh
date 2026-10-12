@@ -10,7 +10,7 @@ FPS=24
 node "$HERE/record-demo.js" "$SRC" "$WORK/frames" 1024 576 $FPS 1 1.875
 # downscale 1080p → 720p (supersampled = crisp), H.264 main profile + faststart: plays on every phone with hardware decoding
 ffmpeg -y -loglevel error -framerate $FPS -i "$WORK/frames/f%05d.jpg" -vf "scale=1280:720:flags=lanczos" \
-  -c:v libx264 -profile:v main -level 3.1 -preset slow -crf 21 -pix_fmt yuv420p -movflags +faststart -an "$WORK/video.mp4"
+  -c:v libx264 -profile:v main -level 3.1 -preset slow -tune animation -crf 26 -pix_fmt yuv420p -movflags +faststart -an "$WORK/video.mp4"
 ffmpeg -y -loglevel error -ss 2 -i "$WORK/video.mp4" -frames:v 1 -q:v 3 "$WORK/poster.jpg"
 python3 "$HERE/embed-video.py" "$SRC" "$WORK/video.mp4" "$WORK/poster.jpg" "$WORK/frames/timeline.json" "$OUT"
 cp "$WORK/video.mp4" "${OUT%.html}.mp4"
