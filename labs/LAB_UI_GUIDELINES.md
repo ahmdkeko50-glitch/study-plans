@@ -23,7 +23,7 @@ original export to see every change below in context. Search for `v3` in the fil
 **Stage toolbar (top of the 3D view): max 3 visible**
 - `🎬 شاهد المحاكاة` (only when the lesson has a demo)
 - `👆 ماذا ألمس؟`
-- `⋯ المزيد` (everything else: views, labels, cross-section, floor, snapshot, fullscreen, panel, help, high contrast, ⟲)
+- `⋯ المزيد` (everything else: views, labels, cross-section, floor, fullscreen, panel, help, high contrast, ⟲ — no snapshot)
 - Add `⏸ / ⏭` only for lessons whose physics evolves in time (waves, oscillations, RC charging…). Static lessons set `static: true`.
 - The nav pad (`＋ － ⌂`) stays; ⟲ is removed from the toolbar because ⌂ does the same job.
 
@@ -36,8 +36,7 @@ original export to see every change below in context. Search for `v3` in the fil
    - `⚡ التجربة`: the 2–4 controls the student really needs (toggle / slider / select). One rescue button at most, hidden until needed (e.g. `⚡ أعِد الشحن` only after breakdown).
    - `↺ ابدأ التجربة من جديد`: the **only** reset button, full width, in its own row (`.resetrow`) right after the main controls — never inside the steps box or next to other buttons.
    - `⚙️ إعدادات متقدّمة (اختياري)`: folded `<details>` — every other slider and toggle.
-   - `🎯 تحدّيات إضافية`: folded (missions from `LAB_CONTENT`).
-   - `📊 سجّل قراءاتك`: folded (recorder). `مسح` and `CSV` buttons appear only once a row exists.
+   - **No** missions card and **no** readings recorder (table, CSV). The student never downloads anything: the 📷 snapshot button is removed from the toolbar too.
 5. Step ③ تحقّق (questions, "ماذا تعلّمت", "أين نراه").
 
 **Text rules**
@@ -61,9 +60,8 @@ Every lesson file embeds the same engine script (`<script>/* ====== ... المخ
 4. **`simplifyToolbar`** — at the top remove `#tb-play`, `#tb-step` and the speed `.tbgroup` when `cur.def.static`; `keep` only `tb-play | tb-demo | tb-step | tb-touch`; drop the branch that converted the help button into a guide button.
 5. **`keys`** — space toggles pause only when `!cur.def.static`; the `L` shortcut must also look inside `#tb-menu`.
 6. **`makePanel.choice`** — if `o.select || opts.length > 4`, render one `<select class="sel">` instead of chips (the block keeps the original option values, strings or numbers).
-7. **`buildV2`** — wrap the missions card and the recorder in `<details class="opt">` appended to the end of step ② (the recorder must no longer use `reads.after(box)` placement because `#reads` is outside the step).
-8. **`buildMissions`** — when the auto-hint fires, open the parent `<details>` (`card.closest('details').open = true`) so the hint is visible.
-9. **`buildRecorder.draw`** — `clr` and `csv` buttons `hidden = !rows.length`.
+7. **`buildV2`** — do not call `buildMissions` or `buildRecorder` at all (keep only the trend-arrow ticker and `buildCards` for step ③).
+8. **`buildToolbar`** — remove the `📷 لقطة` snapshot button (it downloads a PNG).
 
 ---
 

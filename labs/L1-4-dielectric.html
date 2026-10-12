@@ -3296,11 +3296,7 @@ function buildRecorder(rt, step2) {
 function buildV2(rt) {
   const s2 = stepEl(2) && stepEl(2).querySelector('.step-b'), s3 = stepEl(3) && stepEl(3).querySelector('.step-b');
   document.querySelectorAll('#missions, #recorder, details.learned, .reallife').forEach(e => e.remove());
-  if (s2) {
-    const fold = (node, title) => { if (!node) return; const d = el('details', 'opt'); d.appendChild(el('summary', null, title)); s2.appendChild(d); d.appendChild(node); };
-    fold(buildMissions(rt, s2), '🎯 تحدّيات إضافية <small>بعد أن تُكمل الخطوات</small>');
-    fold(buildRecorder(rt, s2), '📊 سجّل قراءاتك وارسم العلاقة <small>اختياري</small>');
-  }
+  // v3: no extra missions card and no readings recorder (table / CSV download) — the lesson's own steps are the only guidance
   if (s3) buildCards(s3);
   const st = new Map(); let k = 0; rt.tickers.push(() => { if (cur === rt && !(++k % 6)) trendTick(st); });
 }
@@ -4183,7 +4179,6 @@ function buildToolbar() {
   if (cur && cur.crossFn) { const cs = btn('✂', 'مقطع عرضي', 'مقطع عرضي', () => { cur.cross = !cur.cross; cs.setAttribute('aria-pressed', cur.cross); cur.crossFn(cur.cross); }, !!cur.cross); tb.appendChild(cs); }
   const fl = btn('▦', 'الأرضية', 'إظهار / إخفاء الأرضية', () => { floorOn = !floorOn; floorGroup.visible = floorOn; fl.setAttribute('aria-pressed', floorOn); saveUi(); }, floorOn); tb.appendChild(fl);
   tb.appendChild(el('span', 'tbsep'));
-  tb.appendChild(btn('📷', 'لقطة', 'حفظ لقطة للمشهد', snapshot));
   tb.appendChild(btn('⛶', 'ملء الشاشة', 'ملء الشاشة (F)', toggleFull));
   tb.appendChild(btn('◧', 'اللوحة', 'إخفاء / إظهار لوحة التحكّم (P)', togglePanel));
   tb.appendChild(btn('؟', 'مساعدة', 'طريقة الاستعمال (H)', () => { $('#help').hidden = false; }));
