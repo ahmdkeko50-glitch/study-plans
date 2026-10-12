@@ -2810,7 +2810,8 @@ function makePointer(rt) {
     tick(dt) { pulse += dt; if (showAllT > 0) { showAllT -= dt; if (showAllT <= 0) refreshHi(); }
       const op = held ? 0.95 : 0.55 + 0.35 * Math.sin(pulse * 5);
       hiState.forEach(list => list.forEach(m => { m.material.opacity = op; if (m.userData.ringFor) { solidBox(m.userData.ringFor, _box); _box.getCenter(m.position); const sz = _box.getSize(_c3); m.scale.setScalar(Math.max(sz.x, sz.y, sz.z) * 1.08 + 0.15); m.material.opacity = op * 0.7; m.material.rotation = pulse * 0.6; } })); },
-    get dragging() { return !!active; }
+    get dragging() { return !!active; },
+    get handles() { return handles; }   // v3: listed by the inventory tool
   };
 }
 
@@ -3049,12 +3050,14 @@ function simplifyPanel(rt) {
   if (intro) { todo.appendChild(el('div', 'todo-h', '🖐 ماذا أفعل؟')); todo.appendChild(intro); }
   // v3: a lesson that ships its own «خطوات التجربة» list needs no second “what do I do” paragraph (the guide still reads it)
   todo.hidden = [...$('#controls').querySelectorAll('.sec>h2')].some(h => /خطوات/.test(h.textContent));
+  // v3: every lesson gets exactly one reset button; a lesson that did not add its own gets a full restart of the experiment
+  if (!$('#controls .resetrow')) { const b = rt.ctx.resetButton(restartCurrent); b.title = 'إعادة التجربة إلى وضعها الابتدائيّ'; }
   $('#srcline').innerHTML = ''; if (src) $('#srcline').appendChild(src);
   const gb = el('button', 'guide-btn', '📘 دليل التجربة — من أين أبدأ؟'); gb.type = 'button'; gb.onclick = () => openGuide(); head.appendChild(gb);
   // controls: keep the first section and any section with the main button; fold the rest away
   const ctr = $('#controls'), secs = [...ctr.children].filter(e => e.classList.contains('sec'));
   const adv = secs.filter(s => s.classList.contains('adv'));
-  const fold = adv.length ? adv : secs.filter((s, i) => i > 0 && !s.classList.contains('tint') && !s.querySelector('.btn.primary'));
+  const fold = adv.length ? adv : (window.LAB_SIMPLE ? [] : secs.filter((s, i) => i > 0 && !s.classList.contains('tint') && !s.querySelector('.btn.primary')));
   if (fold.length) { const d = el('details', 'more'); d.appendChild(el('summary', null, '⚙️ إعدادات متقدّمة (اختياري)')); fold.forEach(s => d.appendChild(s)); ctr.appendChild(d); }
   // long hints become two lines; tap to read all
   ctr.querySelectorAll('p.note').forEach(p => { p.classList.add('clamp'); p.addEventListener('click', () => p.classList.toggle('clamp')); });
@@ -3955,7 +3958,46 @@ function makePanel(rt) {
       s.appendChild(el('h2', null, '<span class="ic">✅</span><span>تحقّق باستعمال المجسّم</span>'));
       list.forEach(x => { const d = el('details', 'q'); d.appendChild(el('summary', null, x.q)); d.appendChild(el('div', 'ans', x.a)); s.appendChild(d); });
     },
-    reset() { store.clear(rt.def.id); }
+    reset() { store.clear(rt.def.id); },
+    /* v3 · guided steps: a self-ticking checklist in the panel + a 3D pointer above the next object to touch.
+       list = [{ t: html, done: (secondsOnThisStep) => bool, target?: () => Object3D, up?: number }]
+       o = { title?, doneText?, scale? (pointer size for big scenes), pointer?: false } */
+    steps(list, o) {
+      o = o || {};
+      const sec = section(o.title || 'خطوات التجربة', '🧭', 'tint');
+      const box = el('div', 'steps'); box.style.margin = '0 0 8px'; sec.appendChild(box);
+      const done = list.map(() => false); let key = '', tOn = 0, lastCur = -2;
+      const draw = c => {
+        const k = c + ':' + done.join(''); if (k === key) return; key = k;
+        box.innerHTML = '<ol style="margin:0;padding:0;list-style:none;display:grid;gap:6px">' + list.map((s, i) => {
+          const d = done[i], isCur = i === c;
+          return '<li style="display:flex;gap:8px;align-items:flex-start;padding:6px 8px;border-radius:9px;' + (isCur ? 'background:#fff;border:1.5px solid var(--c-primary);color:var(--c-ink);box-shadow:0 2px 8px rgba(8,121,140,.15)' : 'border:1.5px solid transparent;' + (d ? 'opacity:.6' : '')) + '">' +
+            '<span style="flex:0 0 22px;height:22px;border-radius:50%;display:grid;place-items:center;font-size:12px;font-weight:800;' + (d ? 'background:var(--c-accent,#68ae71);color:#fff' : isCur ? 'background:var(--c-primary);color:#fff' : 'background:var(--c-line);color:var(--c-ink-soft)') + '">' + (d ? '✓' : (i + 1)) + '</span><span>' + s.t + '</span></li>';
+        }).join('') + '</ol>' + (done.every(Boolean) ? '<p style="margin:8px 0 0;font-weight:700;color:var(--c-primary)">' + (o.doneText || 'أحسنت! أكملت التجربة. أجب عن أسئلة «تحقّق من فهمك» أدناه.') + '</p>' : '');
+      };
+      draw(0);
+      let ptr = null, glow = null; const _p = new T.Vector3();
+      const ensure = () => { if (ptr) return; const K = rt.ctx.kit; const m = new T.MeshStandardMaterial({ color: C.amber, emissive: C.amber, emissiveIntensity: 0.7, roughness: 0.35 }); ptr = new T.Group(); ptr.name = 'step-pointer'; const cone = new T.Mesh(new T.ConeGeometry(0.16, 0.34, 24), m); cone.rotation.x = Math.PI; cone.raycast = () => {}; const stem = new T.Mesh(new T.CylinderGeometry(0.06, 0.06, 0.3, 16), m); stem.position.y = 0.3; stem.raycast = () => {}; ptr.add(cone, stem); glow = K.glow(C.amber, 1, 0.6); glow.raycast = () => {}; rt.root.add(ptr, glow); };
+      rt.tickers.push((dt, realDt) => {
+        if (cur !== rt) return; ensure();
+        if (demo && demo.rt === rt) { ptr.visible = glow.visible = false; return; }   // the demo drives the apparatus: it must not tick off the student's steps
+        let c = done.indexOf(false);
+        if (c !== lastCur) { lastCur = c; tOn = 0; } else tOn += realDt;
+        if (c >= 0) for (let i = 0; i <= c; i++) { if (done[i]) continue; let ok = false; try { ok = !!list[i].done(tOn); } catch (e) { } if (ok) { done[i] = true; if (i === c) flash('✓ الخطوة ' + (i + 1) + ' تمّت', 'ok'); } }
+        c = done.indexOf(false); draw(c);
+        const tg = c >= 0 && list[c].target && o.pointer !== false ? list[c].target() : null;
+        const show = !!tg && !rt.pointer.dragging;
+        ptr.visible = glow.visible = show;
+        if (show) { const t = performance.now() / 1000, sc = o.scale || 1, up = list[c].up != null ? list[c].up : 0.75; tg.getWorldPosition(_p); ptr.position.set(_p.x, _p.y + (up + 0.25 + Math.sin(t * 4) * 0.12) * sc, _p.z); ptr.scale.setScalar(sc); glow.position.set(_p.x, _p.y + (list[c].up ? 0.3 : 0) * sc, _p.z); glow.scale.setScalar((1.1 + 0.25 * Math.sin(t * 5)) * sc); glow.material.opacity = 0.35 + 0.2 * Math.sin(t * 5); }
+      });
+      return { el: sec, reset() { done.fill(false); lastCur = -2; tOn = 0; draw(0); }, isDone: i => !!done[i], get all() { return done.every(Boolean); } };
+    },
+    /* v3 · the single reset button, alone in a full-width row after the main controls (the engine folds 'adv' sections below it) */
+    ctl: key => params[key],   // v3: a control's api by state key (set / get / el)
+    resetButton(fn, label) {
+      const b = P.buttons([[label || '↺ ابدأ التجربة من جديد', fn]], { parent: host.controls })[0];
+      b.row.className = 'btnrow ctl resetrow'; b.classList.add('primary'); return b;
+    }
   };
   return P;
 }
@@ -4247,6 +4289,7 @@ function mount(i, keepView) {
     flash, flyTo, info: showInfo,
     crossSection(fn) { rt.crossFn = fn; },
     demo(spec) { rt.demo = spec; },
+    pointerHandles: () => rt.pointer.handles,   // v3: inventory / tests
     setPaused, setSpeed,
     fmt: { sci, fix, q, ltr, minus }
   });
@@ -4270,11 +4313,49 @@ function mount(i, keepView) {
     camera.position.copy(start); controls.update(); setTimeout(() => flyTo(fin.toArray(), tg.toArray(), 1900), 150); window.__introUntil = performance.now() + 150 + 1900 + 250; } }
   try { rt.api = def.setup(ctx) || {}; } catch (e) { console.error(e); flash('تعذّر بناء التجربة: ' + e.message, '', 8000); rt.api = {}; }
   try { applyHero(rt); } catch (e) { console.error(e); }
+  try { applySimple(rt); } catch (e) { console.error('LAB_SIMPLE', e); }
   try { simplifyPanel(rt); } catch (e) { console.error(e); }
   try { buildV2(rt); } catch (e) { console.error(e); }
   window.__activity = { state: rt.state, api: ctx, def };
   buildToolbar();
   stageEl.classList.toggle('nolabels', !labelsOn);
+}
+/* ===================================================================
+   v3 · per-lesson recipe (window.LAB_SIMPLE): the same simplification for every lesson from a small JSON block
+   { static, adv:[h2 regex], advCtl:[ctl text regex], mainCtl:[ctl text regex], hide:[button text regex],
+     taps:[{label, key, to, after?}], tapLabel:{handle, key, a, b, textA, textB}, heroRead, scale,
+     steps:[{t, done:'expr(S,R,H,HT,t)', target:'object name', up}] }
+   =================================================================== */
+function applySimple(rt) {
+  const Z = window.LAB_SIMPLE; if (!Z || !rt.ctx) return;
+  const ctx = rt.ctx, ctr = $('#controls');
+  const secs = () => [...ctr.children].filter(e => e.classList.contains('sec'));
+  const re = p => new RegExp(p);
+  const any = (txt, pats) => (pats || []).some(p => re(p).test(txt));
+  if (Z.static) rt.def.static = true;
+  secs().forEach(s => { if (any(_txt(s.querySelector('h2')), Z.adv)) s.classList.add('adv'); });
+  let advSec = null; const getAdv = () => advSec || (advSec = ctx.section('إعدادات متقدّمة', '⚙️', 'adv'));
+  const mainSec = () => secs().find(s => !s.classList.contains('adv') && !s.classList.contains('tint')) || getAdv();
+  if (Z.advCtl && Z.advCtl.length) [...ctr.querySelectorAll('.sec:not(.adv) > .ctl')].forEach(c => { if (any(_txt(c), Z.advCtl)) getAdv().appendChild(c); });
+  if (Z.mainCtl && Z.mainCtl.length) { const m = mainSec(); [...ctr.querySelectorAll('.sec.adv > .ctl')].forEach(c => { if (any(_txt(c), Z.mainCtl)) m.appendChild(c); }); }
+  if (Z.hide && Z.hide.length) { ctr.querySelectorAll('.btn').forEach(b => { if (any(_txt(b), Z.hide)) b.hidden = true; }); ctr.querySelectorAll('.btnrow').forEach(r => { if ([...r.children].every(b => b.hidden)) r.hidden = true; }); }
+  // one-tap glides: a button twin for a drag (the control's own onChange keeps the 3D scene in step)
+  const glides = new Map();
+  rt.tickers.push((dt, realDt) => { glides.forEach((g, key) => { const c = ctx.ctl(key); if (!c) { glides.delete(key); return; } const v = c.get(), nv = v + (g.to - v) * Math.min(1, realDt * 3.2); if (Math.abs(g.to - nv) < g.eps) { c.set(g.to); glides.delete(key); } else c.set(Math.round(nv / g.step) * g.step); }); });
+  const glideTo = (key, to) => { const c = ctx.ctl(key); if (!c) return; const rg = c.el.querySelector('input[type=range]'); const step = rg ? +rg.step || 0.01 : 1; glides.set(key, { to, step, eps: Math.max(step, Math.abs(to - c.get()) * 0.015) }); };
+  if (Z.taps && Z.taps.length) {
+    const groups = {}; Z.taps.forEach(t => { const k = t.after || t.key; (groups[k] = groups[k] || []).push(t); });
+    Object.keys(groups).forEach(k => { const c = ctx.ctl(k); const row = ctx.buttons(groups[k].map(t => [t.label, () => { if (t.set) { Object.keys(t.set).forEach(kk => ctx.ctl(kk) && ctx.ctl(kk).set(t.set[kk])); } else glideTo(t.key, t.to); }]), { parent: c ? c.el.parentNode : mainSec() })[0].row; row.classList.add('chips', 'go'); if (c) c.el.after(row); });
+  }
+  if (Z.tapLabel) { const L = Z.tapLabel; const h = rt.pointer.handles.find(x => x.obj && x.obj.name === L.handle); if (h && h.hintLabel) { h.opts.onTap = () => { const c = ctx.ctl(L.key); if (!c) return; const v = c.get(); glideTo(L.key, Math.abs(v - L.a) < Math.abs(v - L.b) ? L.b : L.a); }; h.hintLabel.el.classList.add('tap'); h.hintLabel.el.addEventListener('click', e => { e.stopPropagation(); h.opts.onTap(); }); if (L.textA) rt.tickers.push(() => { const c = ctx.ctl(L.key); if (c && h.hintLabel) h.hintLabel.set('✋ ' + (Math.abs(c.get() - L.a) < Math.abs(c.get() - L.b) ? L.textA : L.textB)); }); } }
+  if (Z.heroRead) { const r = ctx.readout(_txt($('#hero .cap')) || 'القراءة', { wide: true }); const grid = r.el.parentNode; grid.prepend(r.el); rt.tickers.push(() => { const h = $('#hero'); if (!h.hidden) { const k = r.el.querySelector('.k'); const cap = h.querySelector('.cap').innerHTML; if (k.innerHTML !== cap) k.innerHTML = cap; r.set(h.querySelector('.val').innerHTML, h.classList.contains('alert') ? 'alert' : null); } }); }
+  if (Z.steps && Z.steps.length) {
+    const compile = src => { try { return new Function('S', 'R', 'H', 'HT', 't', '"use strict"; return (' + src + ');'); } catch (e) { console.error('LAB_SIMPLE step', src, e); return () => false; } };
+    const list = Z.steps.map(st => { const fn = compile(st.done || 'false'); return { t: st.t, up: st.up, target: st.target ? () => rt.root.getObjectByName(st.target) : null,
+      done: tOn => { const R = readingsNow(), H = parseNum($('#hero .val') && $('#hero .val').innerHTML), HT = _txt($('#hero .cap')); return !!fn(rt.state, R, H, HT, tOn); } }; });
+    const stp = ctx.steps(list, { scale: Z.scale || 1, doneText: Z.doneText });
+    ctr.prepend(stp.el);
+  }
 }
 function restartCurrent() { if (!cur) return; store.clear(cur.def.id); const i = defs.indexOf(cur.def); mount(i, true); flash('أُعيدت التجربة إلى وضعها الابتدائي', 'ok'); }
 
@@ -4666,53 +4747,14 @@ Lab.define({
       explain: 'تصطفّ ثنائيّات القطب في العازل فتُنشئ مجالًا معاكسًا E_d، فيقلّ المجال المحصّل E_k = E/k، ومعه فرق الجهد ΔV_k = E_k·d = ΔV/k. ولأنّ Q ثابتة: C_k = Q/ΔV_k = kC.'
     });
 
-    /* ---------------- guided steps (what to do next + a 3D pointer on the object to touch) ---------------- */
-    const flags = { example: false, readT: 0 };
-    const STEPS = [
+    /* ---------------- guided steps (engine helper: checklist + 3D pointer) ---------------- */
+    const flags = { example: false };
+    const steps = ctx.steps([
       { t: 'والبطارية مفصولة، <b>أدخِل العازل</b> بين الصفيحتين كاملًا <span class="ltr">(f = 100%)</span>: اضغط «أدخِل العازل» أو اسحبه من مقبضه.', done: () => !S.bat && S.ins > 98, target: () => handleSlab },
-      { t: 'اقرأ الفولتميتر: هبط فرق الجهد إلى <span class="ltr">ΔV/k</span>، والشحنة <b>Q لم تتغيّر</b>.', done: () => flags.readT > 2.5, target: () => meterHolder, up: 2.25 },
+      { t: 'اقرأ الفولتميتر: هبط فرق الجهد إلى <span class="ltr">ΔV/k</span>، والشحنة <b>Q لم تتغيّر</b>.', done: tOn => tOn > 2.5 && !S.bat && S.ins > 98, target: () => meterHolder, up: 2.25 },
       { t: 'أخرِج العازل، ثمّ <b>المس المفتاح</b> لتوصل البطارية بالمتسعة.', done: () => S.bat, target: () => sw, up: 1.1 },
       { t: 'أدخِل العازل والبطارية موصولة: <b>ΔV ثابت</b> لكنّ <b>Q تزداد k مرّة</b>.', done: () => S.bat && S.ins > 98, target: () => handleSlab }
-    ];
-    const stepDone = STEPS.map(() => false);
-    ctx.section('خطوات التجربة', '🧭', 'tint');
-    // the steps list is a block of its own (not a p.note: the engine clamps every note to two lines)
-    const stepsNote = (() => { const n = ctx.note(''); const d = document.createElement('div'); d.className = 'steps'; d.style.margin = '0 0 8px'; n.el.replaceWith(d); return { el: d, set(h) { d.innerHTML = h; } }; })();
-    const restart = () => { example(); stepDone.fill(false); flags.readT = 0; drawSteps(-1); };
-    let stepKey = '';
-    function drawSteps(cur) {
-      const key = cur + ':' + stepDone.join(''); if (key === stepKey) return; stepKey = key;
-      stepsNote.set('<ol style="margin:0;padding:0;list-style:none;display:grid;gap:6px">' + STEPS.map((s, i) => {
-        const d = stepDone[i], c = i === cur;
-        return '<li style="display:flex;gap:8px;align-items:flex-start;padding:6px 8px;border-radius:9px;' + (c ? 'background:#fff;border:1.5px solid var(--c-primary);color:var(--c-ink);box-shadow:0 2px 8px rgba(8,121,140,.15)' : 'border:1.5px solid transparent;' + (d ? 'opacity:.6' : '')) + '">' +
-          '<span style="flex:0 0 22px;height:22px;border-radius:50%;display:grid;place-items:center;font-size:12px;font-weight:800;' + (d ? 'background:var(--c-accent,#68ae71);color:#fff' : c ? 'background:var(--c-primary);color:#fff' : 'background:var(--c-line);color:var(--c-ink-soft)') + '">' + (d ? '✓' : (i + 1)) + '</span><span>' + s.t + '</span></li>';
-      }).join('') + '</ol>' + (stepDone.every(Boolean) ? '<p style="margin:8px 0 0;font-weight:700;color:var(--c-primary)">أحسنت! أكملت التجربة. أجب عن أسئلة «تحقّق من فهمك» أدناه.</p>' : ''));
-    }
-    // 3D pointer: bobbing arrow + pulsing halo above the object to touch next
-    const ptr = K.group('step-pointer'); ctx.add(ptr);
-    const ptrM = new T.MeshStandardMaterial({ color: C.amber, emissive: C.amber, emissiveIntensity: 0.7, roughness: 0.35 });
-    const ptrCone = new T.Mesh(new T.ConeGeometry(0.16, 0.34, 24), ptrM); ptrCone.rotation.x = Math.PI; ptrCone.raycast = () => {}; ptr.add(ptrCone);
-    const ptrStem = new T.Mesh(new T.CylinderGeometry(0.06, 0.06, 0.3, 16), ptrM); ptrStem.position.y = 0.3; ptrStem.raycast = () => {}; ptr.add(ptrStem);
-    const ptrGlow = K.glow(C.amber, 1, 0.6); ptrGlow.raycast = () => {}; ctx.add(ptrGlow);
-    function updateSteps(realDt, t) {
-      if (ctx.demoing) { ptr.visible = ptrGlow.visible = false; return; }   // the demo drives the apparatus; it must not tick off the student's steps
-      let cur = stepDone.indexOf(false);
-      if (cur === 1 && !S.bat && S.ins > 98) flags.readT += realDt;
-      for (let i = 0; i < STEPS.length; i++) {
-        if (!stepDone[i] && (i === cur || i < cur) && STEPS[i].done()) { stepDone[i] = true; if (i === cur) { ctx.flash('✓ الخطوة ' + (i + 1) + ' تمّت', 'ok'); } }
-      }
-      cur = stepDone.indexOf(false);
-      drawSteps(cur);
-      const tg = cur >= 0 && STEPS[cur].target ? STEPS[cur].target() : null;
-      ptr.visible = ptrGlow.visible = !!tg && !ctx.dragging;
-      if (tg) {
-        const p = tg.getWorldPosition(new T.Vector3());
-        const bob = Math.sin(t * 4) * 0.12;
-        ptr.position.set(p.x, p.y + (STEPS[cur].up || 0.75) + 0.25 + bob, p.z);
-        ptrGlow.position.set(p.x, p.y + (STEPS[cur].up ? 0.3 : 0), p.z);
-        ptrGlow.scale.setScalar(1.1 + 0.25 * Math.sin(t * 5)); ptrGlow.material.opacity = 0.35 + 0.2 * Math.sin(t * 5);
-      }
-    }
+    ]);
 
     /* ---------------- what the student touches (3 controls + 1 rescue button) ---------------- */
     ctx.section('التجربة', '⚡');
@@ -4732,9 +4774,7 @@ Lab.define({
     rechargeBtn.row.hidden = true;   // appears only after a breakdown
     ctx.note('مثال الكتاب: متسعة سعتها <span class="ltr">10 pF</span> شُحنت بـ <span class="ltr">12 V</span> ثمّ فُصلت، وأُدخل عازل <span class="ltr">k = 6</span> يملأ الحيّز. (صفيحتان <span class="ltr">10 cm × 10 cm</span> وبُعد <span class="ltr">8.85 mm</span> تعطيان <span class="ltr">10 pF</span>.)');
 
-    // the one reset button, in a place of its own (after the controls, before the folded advanced settings)
-    const resetRow = ctx.buttons([['↺ ابدأ التجربة من جديد', restart]], { parent: document.getElementById('controls') })[0].row;
-    resetRow.className = 'btnrow ctl resetrow'; resetRow.querySelector('.btn').classList.add('primary');
+    ctx.resetButton(() => { example(); steps.reset(); });
 
     /* ---------------- advanced (folded by the engine because of class 'adv') ---------------- */
     ctx.section('إعدادات متقدّمة', '⚙️', 'adv');
@@ -4886,7 +4926,6 @@ Lab.define({
     return {
       update(dt, t, realDt) {
         // rebuild wires / meter when geometry or range changes
-        updateSteps(realDt, performance.now() / 1000);
         const key = S.L + '|' + S.d;
         const c = Cnow();
         let Q, dV;
