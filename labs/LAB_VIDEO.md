@@ -1,21 +1,24 @@
-# نسخة الفيديو للأجهزة الضعيفة — Lab video edition
+# فيديو التجربة داخل المختبر — Embedded experiment video
 
-Many students' phones are too weak for the interactive 3D lab. The **video edition** of a lesson is a separate HTML file
-(e.g. `L1-4-video.html`) that opens on a recorded video of the lesson's guided demo («شاهد المحاكاة»).
+Many students' phones are too weak for the interactive 3D lab. The fix is a **copy** of the lesson (e.g.
+`L1-4-with-video.html`) that is the same 3D experiment with a recorded video of its guided demo **inside it**.
 The original lesson file is never changed.
 
 What the student gets:
-- a normal video (H.264 MP4, 960×540, 24 fps) played by the phone's hardware decoder — no 3D, no GPU load;
-- **large captions under the video**, synced to it (and as Arabic subtitles in fullscreen);
-- **live readings** under the video (the same values the lab shows), synced to the video;
-- **chapter buttons** to jump to any part, and a **speed** choice (1× · 1.25× · 1.5×);
-- **the prediction question**: the video pauses at «توقّف وفكّر», the student taps an answer, and the result chapter
-  tells them whether their prediction was right;
-- «ماذا تعلّمنا؟» and «تحقّق من فهمك» below the video;
-- a button «🧪 جرّب التجربة التفاعليّة بنفسك» that starts the full 3D lab inside the same file. Until it is tapped,
-  none of the 3D code is even parsed (all lab scripts are stored as inert `text/x-lab` blocks). Phones without WebGL get the
-  button disabled with an explanation; weak phones get a note that the video is enough. Opening the file with `#3d`
-  at the end of the address starts the 3D lab directly; inside the lab, «🎥 العودة إلى الفيديو» goes back.
+- The toolbar button **🎬 شاهد الفيديو** (it replaces the live «شاهد المحاكاة» demo, which is heavy on weak phones),
+  a yellow **«🎬 شاهد التجربة فيديو — أخفّ على الهاتف»** button at the top of the panel, and «شاهد الفيديو أوّلًا» in the guide.
+- The video opens over the experiment. **While it is open the 3D rendering stops completely**, so the phone only plays a
+  normal H.264 video with its hardware decoder.
+- Large captions and live readings (ΔV, Q, C…) under the video, synced to it; Arabic subtitles in fullscreen.
+- Chapter buttons, a speed choice (1× · 1.25× · 1.5×).
+- The prediction question: the video pauses at «توقّف وفكّر», the student taps an answer, and the «النتيجة» chapter says
+  whether it was right.
+- At the end, or with «✋ جرّب بنفسك ✕» at any time, the video closes and the 3D experiment continues where it was.
+- On a device without WebGL (no 3D at all) the video opens automatically.
+- Phone held sideways: the player never gets taller than the screen. Wide screens: video and captions side by side.
+
+Video quality: frames are rendered at 1920×1080 and downscaled to 1280×720 (supersampled, sharp labels), H.264 CRF 21,
+24 fps. About 1 MB per 10 seconds of video.
 
 ---
 
@@ -25,35 +28,30 @@ Requirements: Node + Playwright with Chromium, Python 3, ffmpeg.
 
 ```bash
 cd labs/tools
-bash make-video.sh ../L1-4-dielectric.html ../L1-4-video.html
+bash make-video.sh ../L1-4-dielectric.html ../L1-4-with-video.html
 ```
 
-This runs three steps (you can run them separately):
+Steps inside the script (they can be run one by one):
 
-1. **Record** — `node record-demo.js <lesson.html> <frames-dir> 960 540 24 1`
-   Opens a temporary copy of the lesson with a **virtual clock**, starts «شاهد المحاكاة», and saves one JPEG per video frame
-   plus `timeline.json` (chapters, captions, readings). Because time only advances when a frame has been captured, every frame
-   is exact even on a slow machine without a GPU. The copy sets the demo pace to 1 (the live lab uses 1.35) and switches off
-   the auto-quality governor so shadows stay on. The demo's own caption box is hidden: captions are shown by the page instead.
-   At the prediction question the recorder holds the picture for 3 s and records the question and its options.
-   Speed here: about 3 frames per second of real time (≈ 15 min for a 2-minute demo).
-2. **Encode** — `ffmpeg -framerate 24 -i frames/f%05d.jpg -c:v libx264 -profile:v main -level 3.1 -preset slow -crf 27 -pix_fmt yuv420p -movflags +faststart -an video.mp4`
-3. **Build the page** — `python3 make-video-page.py <lesson.html> video.mp4 poster.jpg frames/timeline.json <out.html>`
-   Add `--external L1-4-video.mp4` to reference the MP4 next to the HTML instead of embedding it (smaller HTML, but the two
-   files must always travel together). Default: embedded, one self-contained file.
-
-The script also leaves `L1-4-video.mp4` next to the page, for Telegram groups or YouTube.
+1. **Record** — `node record-demo.js <lesson.html> <frames-dir> 1024 576 24 1 1.875`
+   Opens a temporary copy of the lesson with a **virtual clock** and starts «شاهد المحاكاة». Time only advances after a frame
+   has been captured, so every frame is exact even on a machine without a GPU. The copy uses demo pace 1 (the live lab uses
+   1.35) and switches off the auto-quality governor so shadows stay on. The demo's caption box is hidden; captions, the
+   question and the readings are written to `timeline.json` instead. Speed on a CPU-only machine: about 1 frame per second
+   at 1080p (≈ 30 min for a 90-second demo). Use `960 540 24 1 1` for a quick draft (≈ 3 frames per second).
+2. **Encode** — `ffmpeg -framerate 24 -i frames/f%05d.jpg -vf scale=1280:720:flags=lanczos -c:v libx264 -profile:v main -level 3.1 -preset slow -crf 21 -pix_fmt yuv420p -movflags +faststart -an video.mp4`
+3. **Embed** — `python3 embed-video.py <lesson.html> video.mp4 poster.jpg frames/timeline.json <out.html>`
 
 ## Requirements on the lesson
 
-- The lesson must have a guided demo (`ctx.demo({...})`). Every lesson in `labs/` has one.
-- The prediction verdict uses the lesson's `ctx.predict({ options, correct })` and the first chapter after the question whose
-  title contains «النتيجة» (or the chapter right after the question).
-- «تحقّق من فهمك» comes from `ctx.checks([...])`, «ماذا تعلّمنا؟» from `LAB_CONTENT.learned`.
+- A guided demo (`ctx.demo({...})`) — every lesson in `labs/` has one.
+- The verdict uses `ctx.predict({ options, correct })` and the first chapter after the question whose title contains «النتيجة».
+- `embed-video.py` patches three engine lines in the copy (demo button, guide button, render loop). If the engine changes and a
+  patch target is missing, the script stops with «patch target not found» instead of producing a broken file.
 
 ## Checks before sharing
 
-1. Open the page on a phone: the poster shows at once, the video plays, captions and readings change with it.
-2. Play to the question: the video pauses, an answer resumes it, the result chapter shows ✓ or ✗.
-3. Tap a chapter button and a speed button.
-4. Tap «🧪 جرّب التجربة التفاعليّة»: the 3D lab starts; «🎥 العودة إلى الفيديو» returns.
+1. Open the file on a phone: tap «🎬 شاهد الفيديو». The video plays; captions and readings change with it.
+2. Play to the question: it pauses; an answer resumes it; «النتيجة» shows ✓ or ✗.
+3. Tap a chapter and a speed button; turn the phone sideways.
+4. Tap «✋ جرّب بنفسك ✕»: the 3D experiment is back and responds.
