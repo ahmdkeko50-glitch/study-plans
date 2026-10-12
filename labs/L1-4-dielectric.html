@@ -494,6 +494,8 @@ details.opt>.missions,details.opt>.recorder{border:0;margin:0;background:transpa
 .missions .hintbtn{display:none}
 .ctl select.sel{width:100%;min-height:44px;border:1px solid var(--c-line);border-radius:10px;padding:0 10px;font:inherit;font-size:14px;background:var(--c-paper);color:var(--c-ink)}
 .ctl select.sel:focus{outline:2px solid var(--c-primary)}
+.resetrow{margin:12px 0 4px;padding-top:12px;border-top:1px dashed var(--c-line)}
+.resetrow .btn{width:100%}
 </style>
 </head>
 <body>
@@ -4678,7 +4680,7 @@ Lab.define({
     ctx.section('خطوات التجربة', '🧭', 'tint');
     // the steps list is a block of its own (not a p.note: the engine clamps every note to two lines)
     const stepsNote = (() => { const n = ctx.note(''); const d = document.createElement('div'); d.className = 'steps'; d.style.margin = '0 0 8px'; n.el.replaceWith(d); return { el: d, set(h) { d.innerHTML = h; } }; })();
-    ctx.buttons([['↺ ابدأ التجربة من جديد', () => { example(); stepDone.fill(false); flags.readT = 0; drawSteps(-1); }]]);
+    const restart = () => { example(); stepDone.fill(false); flags.readT = 0; drawSteps(-1); };
     let stepKey = '';
     function drawSteps(cur) {
       const key = cur + ':' + stepDone.join(''); if (key === stepKey) return; stepKey = key;
@@ -4725,6 +4727,10 @@ Lab.define({
     const rechargeBtn = ctx.buttons([['⚡ أعِد الشحن', () => recharge('أُعيد شحن المتسعة إلى ΔV₀ ثمّ فُصلت')]])[0];
     rechargeBtn.row.hidden = true;   // appears only after a breakdown
     ctx.note('مثال الكتاب: متسعة سعتها <span class="ltr">10 pF</span> شُحنت بـ <span class="ltr">12 V</span> ثمّ فُصلت، وأُدخل عازل <span class="ltr">k = 6</span> يملأ الحيّز. (صفيحتان <span class="ltr">10 cm × 10 cm</span> وبُعد <span class="ltr">8.85 mm</span> تعطيان <span class="ltr">10 pF</span>.)');
+
+    // the one reset button, in a place of its own (after the controls, before the folded advanced settings)
+    const resetRow = ctx.buttons([['↺ ابدأ التجربة من جديد', restart]], { parent: document.getElementById('controls') })[0].row;
+    resetRow.className = 'btnrow ctl resetrow'; resetRow.querySelector('.btn').classList.add('primary');
 
     /* ---------------- advanced (folded by the engine because of class 'adv') ---------------- */
     ctx.section('إعدادات متقدّمة', '⚙️', 'adv');

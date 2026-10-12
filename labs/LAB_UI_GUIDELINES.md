@@ -32,8 +32,9 @@ original export to see every change below in context. Search for `v3` in the fil
 2. **Live readings** (`#reads`) — always visible, never inside a collapsible.
 3. Step ① توقّع (prediction chips).
 4. Step ② جرّب — contains, in order:
-   - `🧭 خطوات التجربة`: numbered list that ticks itself + **one** `↺ ابدأ التجربة من جديد` button.
+   - `🧭 خطوات التجربة`: numbered list that ticks itself (no buttons inside it).
    - `⚡ التجربة`: the 2–4 controls the student really needs (toggle / slider / select). One rescue button at most, hidden until needed (e.g. `⚡ أعِد الشحن` only after breakdown).
+   - `↺ ابدأ التجربة من جديد`: the **only** reset button, full width, in its own row (`.resetrow`) right after the main controls — never inside the steps box or next to other buttons.
    - `⚙️ إعدادات متقدّمة (اختياري)`: folded `<details>` — every other slider and toggle.
    - `🎯 تحدّيات إضافية`: folded (missions from `LAB_CONTENT`).
    - `📊 سجّل قراءاتك`: folded (recorder). `مسح` and `CSV` buttons appear only once a row exists.
@@ -77,12 +78,16 @@ Lab.define({
   setup(ctx) {
     // ② steps list first (tint section is never folded)
     ctx.section('خطوات التجربة', '🧭', 'tint');
-    …STEPS + ONE button: ['↺ ابدأ التجربة من جديد', () => { example(); stepDone.fill(false); drawSteps(-1); }]
+    …STEPS list only (a <div class="steps">, no buttons here)
 
     // ③ the few controls the student needs
     ctx.section('التجربة', '⚡');
     ctx.toggle(...); ctx.param(...); ctx.choice(... 5+ options → automatic <select>)
     const rescue = ctx.buttons([['⚡ أعِد الشحن', () => recharge()]])[0]; rescue.row.hidden = true;   // show only when needed
+
+    // the single reset button, isolated in its own full-width row after the controls
+    const resetRow = ctx.buttons([['↺ ابدأ التجربة من جديد', restart]], { parent: document.getElementById('controls') })[0].row;
+    resetRow.className = 'btnrow ctl resetrow'; resetRow.querySelector('.btn').classList.add('primary');
 
     // ④ everything else, folded by the engine
     ctx.section('إعدادات متقدّمة', '⚙️', 'adv');
@@ -102,7 +107,7 @@ Lab.define({
 Checklist per lesson:
 - [ ] `static: true` unless the simulation needs pause/step.
 - [ ] Sections in this order: `خطوات التجربة` (tint) → main controls → `adv` section(s).
-- [ ] Exactly one reset button in the steps section; no "example" button (the reset applies the book example and the default state **is** the book example).
+- [ ] Exactly one reset button, alone in `.resetrow` after the main controls (CSS: `.resetrow{margin:12px 0 4px;padding-top:12px;border-top:1px dashed var(--c-line)} .resetrow .btn{width:100%}`); no "example" button (the reset applies the book example and the default state **is** the book example).
 - [ ] Any `ctx.choice` with 5+ options becomes a dropdown automatically; keep chips for 2–4 options only.
 - [ ] Add a `wide` readout that mirrors the hero value so it also appears in the panel.
 - [ ] For every control whose effect is invisible in some state, call `ctx.flash('…')` explaining what to do (throttle to one flash per ~2.5 s).
