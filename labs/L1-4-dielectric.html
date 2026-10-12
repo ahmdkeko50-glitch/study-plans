@@ -496,6 +496,8 @@ details.opt>.missions,details.opt>.recorder{border:0;margin:0;background:transpa
 .ctl select.sel:focus{outline:2px solid var(--c-primary)}
 .resetrow{margin:12px 0 4px;padding-top:12px;border-top:1px dashed var(--c-line)}
 .resetrow .btn{width:100%}
+.lab3.grab.tap{pointer-events:auto;cursor:pointer;font-size:14px;padding:4px 12px}
+.ctl .chips.go .chip{font-weight:700;background:var(--c-tint);border-color:var(--c-primary);color:var(--c-primary-dark)}
 </style>
 </head>
 <body>
@@ -2327,8 +2329,8 @@ function initRenderer() {
   camera = new T.PerspectiveCamera(42, 1, 0.05, 400);
   camera.position.set(0, 3.2, 7);
   controls = new T.OrbitControls(camera, canvas);
-  controls.enableDamping = true; controls.dampingFactor = 0.09;
-  controls.rotateSpeed = 0.8; controls.zoomSpeed = 0.9; controls.panSpeed = 0.8;
+  controls.enableDamping = true; controls.dampingFactor = 0.12;
+  controls.rotateSpeed = 0.55; controls.zoomSpeed = 0.75; controls.panSpeed = 0.7;   // v3: gentler orbit for students
   controls.screenSpacePanning = true;
   controls.zoomToCursor = true;   // the wheel / pinch zooms toward the point under the cursor or between the fingers
   const ro = new ResizeObserver(resize); ro.observe(stageEl);
@@ -2623,7 +2625,7 @@ function makePointer(rt) {
     }
     if (best) return best;
     // forgiving touch: a finger near an interactive object still grabs it (screen-space halo around its box)
-    const W = canvas.clientWidth, H = canvas.clientHeight, px = (ndc.x + 1) / 2 * W, py = (1 - ndc.y) / 2 * H, pad = COARSE ? 30 : 12;
+    const W = canvas.clientWidth, H = canvas.clientHeight, px = (ndc.x + 1) / 2 * W, py = (1 - ndc.y) / 2 * H, pad = COARSE ? 44 : 20;   // v3: easier to grab
     let bestD = Infinity;
     for (const h of handles) {
       if (!usable(h)) continue;
@@ -2734,7 +2736,7 @@ function makePointer(rt) {
         active.offset = wp.clone().sub(b.hit.point);
       }
     }
-    if (h.hintLabel) { h.hintLabel.remove(); h.hintLabel = null; }
+    if (h.hintLabel && !h.opts.onTap) { h.hintLabel.remove(); h.hintLabel = null; }   // a tappable label stays: it is a control, not just a hint
     h.opts.onStart && h.opts.onStart();
     e.preventDefault(); e.stopPropagation();
   }
@@ -2790,7 +2792,8 @@ function makePointer(rt) {
     drag(obj, opts) {
       opts = opts || {};
       const h = { obj, opts, kind: 'drag', target: opts.target };
-      if (opts.hint) h.hintLabel = rt.labels.add(obj, '✋ ' + opts.hint, { cls: 'grab keep', offset: opts.hintOffset || [0, 0.6, 0], noOcclude: true });
+      if (opts.hint) { h.hintLabel = rt.labels.add(obj, '✋ ' + opts.hint, { cls: 'grab keep', offset: opts.hintOffset || [0, 0.6, 0], noOcclude: true });
+        if (opts.onTap) { h.hintLabel.el.classList.add('tap'); h.hintLabel.el.addEventListener('click', e => { e.stopPropagation(); opts.onTap(); }); } }   // v3: a tap on the label moves the object by itself
       handles.push(h); return h;
     },
     rotate(obj, opts) {
@@ -4666,7 +4669,7 @@ Lab.define({
     /* ---------------- guided steps (what to do next + a 3D pointer on the object to touch) ---------------- */
     const flags = { example: false, readT: 0 };
     const STEPS = [
-      { t: 'والبطارية مفصولة، <b>اسحب العازل</b> من مقبضه الأسود إلى الفراغ بين الصفيحتين حتى يملأه <span class="ltr">(f = 100%)</span>.', done: () => !S.bat && S.ins > 98, target: () => handleSlab },
+      { t: 'والبطارية مفصولة، <b>أدخِل العازل</b> بين الصفيحتين كاملًا <span class="ltr">(f = 100%)</span>: اضغط «أدخِل العازل» أو اسحبه من مقبضه.', done: () => !S.bat && S.ins > 98, target: () => handleSlab },
       { t: 'اقرأ الفولتميتر: هبط فرق الجهد إلى <span class="ltr">ΔV/k</span>، والشحنة <b>Q لم تتغيّر</b>.', done: () => flags.readT > 2.5, target: () => meterHolder, up: 2.25 },
       { t: 'أخرِج العازل، ثمّ <b>المس المفتاح</b> لتوصل البطارية بالمتسعة.', done: () => S.bat, target: () => sw, up: 1.1 },
       { t: 'أدخِل العازل والبطارية موصولة: <b>ΔV ثابت</b> لكنّ <b>Q تزداد k مرّة</b>.', done: () => S.bat && S.ins > 98, target: () => handleSlab }
@@ -4714,7 +4717,13 @@ Lab.define({
     /* ---------------- what the student touches (3 controls + 1 rescue button) ---------------- */
     ctx.section('التجربة', '⚡');
     const batCtl = ctx.toggle('bat', { label: 'البطارية موصولة (فرق الجهد ثابت)', value: false, persist: false, onChange: (v, init) => { sw.setClosed(v); if (!init) { if (!v) { Qiso = broken ? 0 : Cnow().C * S.V0; ctx.flash('فُصلت البطارية — الشحنة Q ثابتة الآن', 'ok'); } else { ctx.flash('وُصلت البطارية — فرق الجهد ثابت الآن', 'ok'); } } } });
-    const insCtl = ctx.param('ins', { label: 'الجزء المُدخَل من العازل f', min: 0, max: 100, step: 1, value: 0, unit: '%', digits: 0, persist: false, hint: 'أو اسحب العازل من مقبضه داخل المشهد.', onChange: (v, init) => { if (!init) setSlabX(slabX()); } });
+    const insCtl = ctx.param('ins', { label: 'الجزء المُدخَل من العازل f', min: 0, max: 100, step: 1, value: 0, unit: '%', digits: 0, persist: false, onChange: (v, init) => { if (!init) { slabAnim = null; setSlabX(slabX()); } } });
+    // one-tap control: the slab glides in or out by itself (no precise dragging needed)
+    let slabAnim = null;
+    const slideTo = to => { slabAnim = { to }; };
+    ctx.tick((dt, realDt) => { if (!slabAnim) return; const v = S.ins + (slabAnim.to - S.ins) * Math.min(1, (realDt || dt) * 3.2); const done = Math.abs(v - slabAnim.to) < 1.5; insCtl.set(done ? slabAnim.to : Math.round(v * 10) / 10, true); setSlabX(slabX()); if (done) slabAnim = null; });
+    const goRow = ctx.buttons([['⬇ أدخِل العازل', () => slideTo(100)], ['⬆ أخرِج العازل', () => slideTo(0)]]);
+    goRow[0].row.classList.add('chips', 'go');
     let syncing = false, lastNoEffect = 0;
     // a change that cannot show while the slab is outside the plates → say so at once (otherwise «nothing changes»)
     const noEffect = () => { const now = performance.now(); if (S.ins < 2 && now - lastNoEffect > 2500) { lastNoEffect = now; ctx.flash('العازل خارج المتسعة فلا أثر لمادّته الآن — اسحبه إلى الداخل لترى التغيّر'); } };
@@ -4758,7 +4767,7 @@ Lab.define({
     }
 
     /* ---------------- direct manipulation ---------------- */
-    ctx.drag(slabRig, { axis: [1, 0, 0], hint: 'اسحب العازل', hintOffset: [0, 0.9, 0], onMove: p => { insCtl.set(Math.round(Math.max(0, Math.min(1, 1 - p.x / (Ls + 1.0))) * 1000) / 10, true); },
+    const slabH = ctx.drag(slabRig, { axis: [1, 0, 0], hint: 'أدخِل العازل', hintOffset: [-0.6, 1.0, 0], onTap: () => slideTo(S.ins > 50 ? 0 : 100), onStart: () => { slabAnim = null; }, onMove: p => { insCtl.set(Math.round(Math.max(0, Math.min(1, 1 - p.x / (Ls + 1.0))) * 1000) / 10, true); },
       clamp: p => { p.x = Math.max(0, Math.min(Ls + 1.0, p.x)); p.y = Y0 + gap / 2; p.z = 0; setSlabX(p.x); return p; } });
     ctx.pick(sw, () => batCtl.set(!S.bat));
     ctx.crossSection(on => { [plateM, slabM].forEach(m => { m.clippingPlanes = on ? [clipPlane] : []; m.needsUpdate = true; }); cross = on; });
@@ -4964,6 +4973,7 @@ Lab.define({
         // labels
         labT.set(f.ltr('+Q = ' + (Q > 0 ? eng(f, Q, 'C').replace(/<[^>]+>/g, '') : '0')));
         labB.set(f.ltr('−Q'));
+        if (slabH.hintLabel) slabH.hintLabel.set(S.ins > 50 ? '✋ أخرِج العازل' : '✋ أدخِل العازل');
         swLab.set(S.bat ? 'البطارية موصولة' : 'البطارية مفصولة'); swLab.cls('hot', !S.bat);
         labEd.show(inSlab && S.fieldShow && dV > 0); labEd.anchor.set(Math.min(L2 - 0.3, slabRig.position.x + 0.2), Y0 + gap + 0.55, Ls / 2 + 0.2);
         labEd.set('<span style="color:' + ctx.CSS(C.E) + '">E ↓</span> · <span style="color:#c98f00">E_d ↑</span> · ' + f.ltr('E_k = E/k'));

@@ -48,6 +48,15 @@ original export to see every change below in context. Search for `v3` in the fil
 
 ---
 
+## 2b. Easier control (3D)
+
+Students found dragging in 3D hard. Four fixes, all in 1-4:
+
+- **One-tap actions**: every main drag has a button twin. 1-4 has `⬇ أدخِل العازل` / `⬆ أخرِج العازل` under the `f` slider; the slab glides by itself (`slideTo(to)` tween in a `ctx.tick`, ends when within 1.5 % of the target).
+- **Tappable ✋ label**: `ctx.drag(obj, { hint, onTap })` makes the ✋ label a button (engine: `.lab3.grab.tap{pointer-events:auto}`; the label is kept after the first drag when `onTap` exists). Keep its text to a verb + object and update it with the state (`أدخِل` ↔ `أخرِج`).
+- **Bigger grab tolerance**: `hitHandle` halo `pad = COARSE ? 44 : 20` (was 30 / 12).
+- **Gentler camera**: `rotateSpeed 0.55`, `zoomSpeed 0.75`, `panSpeed 0.7`, `dampingFactor 0.12`.
+
 ## 3. Engine edits to port (copy from `L1-4-dielectric.html`, marked `v3`)
 
 Every lesson file embeds the same engine script (`<script>/* ====== ... المختبر ثلاثي الأبعاد` …). Apply these edits once per file, or once in the shared build template.
@@ -62,6 +71,8 @@ Every lesson file embeds the same engine script (`<script>/* ====== ... المخ
 6. **`makePanel.choice`** — if `o.select || opts.length > 4`, render one `<select class="sel">` instead of chips (the block keeps the original option values, strings or numbers).
 7. **`buildV2`** — do not call `buildMissions` or `buildRecorder` at all (keep only the trend-arrow ticker and `buildCards` for step ③).
 8. **`buildToolbar`** — remove the `📷 لقطة` snapshot button (it downloads a PNG).
+9. **`initRenderer`** — camera speeds / damping as in §2b.
+10. **`makePointer`** — grab halo `pad = COARSE ? 44 : 20`; `drag()` adds a click handler on the hint label when `opts.onTap` is given; `onDown` keeps that label.
 
 ---
 
@@ -108,6 +119,7 @@ Checklist per lesson:
 - [ ] Exactly one reset button, alone in `.resetrow` after the main controls (CSS: `.resetrow{margin:12px 0 4px;padding-top:12px;border-top:1px dashed var(--c-line)} .resetrow .btn{width:100%}`); no "example" button (the reset applies the book example and the default state **is** the book example).
 - [ ] Any `ctx.choice` with 5+ options becomes a dropdown automatically; keep chips for 2–4 options only.
 - [ ] Add a `wide` readout that mirrors the hero value so it also appears in the panel.
+- [ ] Every 3D drag has a one-tap button twin and a tappable ✋ label (§2b).
 - [ ] For every control whose effect is invisible in some state, call `ctx.flash('…')` explaining what to do (throttle to one flash per ~2.5 s).
 - [ ] Keep readout labels referenced by `LAB_CONTENT.missions[*].check` (e.g. `R['السعة C']`) unchanged, or update the JSON too.
 - [ ] Step indices used inside `updateSteps` (e.g. `cur === 1` for the "read the meter" timer) must be re-checked after removing a step.
