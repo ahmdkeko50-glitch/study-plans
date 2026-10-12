@@ -496,6 +496,55 @@ details.opt>.missions,details.opt>.recorder{border:0;margin:0;background:transpa
 .ctl select.sel:focus{outline:2px solid var(--c-primary)}
 .resetrow{margin:12px 0 4px;padding-top:12px;border-top:1px dashed var(--c-line)}
 .resetrow .btn{width:100%}
+/* ---------- v3 · phones & tablets ---------- */
+button,.btn,.chip,.tb,.step-h,.tgl,#navpad button,details summary{touch-action:manipulation}
+#toolbar,#navpad,#hero{user-select:none;-webkit-user-select:none}
+#app{padding-left:env(safe-area-inset-left);padding-right:env(safe-area-inset-right)}
+#panel-body{padding-bottom:calc(34px + env(safe-area-inset-bottom))}
+#split{display:none;flex:0 0 auto;height:22px;background:var(--c-paper);border-bottom:1px solid var(--c-line);cursor:row-resize;touch-action:none;position:relative}
+#split::before{content:"";position:absolute;left:50%;top:8px;width:44px;height:5px;margin-left:-22px;border-radius:3px;background:#b9c9cc}
+#split:active::before{background:var(--c-primary)}
+/* column layouts (phones, tablets in portrait): compact header, resizable split, readings as one scrollable strip */
+@media (max-width:760px), (min-width:761px) and (max-width:1024px) and (orientation:portrait){
+  #app{--stage-h:52dvh}
+  #stage{flex:0 0 var(--stage-h);min-height:var(--stage-h)}
+  #split{display:block}
+  .brandbar{padding:6px 10px}
+  .brandbar .row1{gap:8px}
+  .brandbar .kicker{display:none}
+  .brandbar .ltitle{font-size:14px;line-height:1.3;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .brandbar img{height:26px}
+  #head h1{font-size:16px}
+  #reads.sec.tint{padding:8px 9px}
+  #reads>h2{display:none}
+  .reads{display:flex;overflow-x:auto;gap:6px;padding-bottom:4px;scrollbar-width:none;-webkit-overflow-scrolling:touch}
+  .reads::-webkit-scrollbar{display:none}
+  .reads .read,.reads .read.wide{flex:0 0 auto;min-width:112px;max-width:70vw;grid-column:auto}
+  .reads .read .k{white-space:nowrap}
+  #hero{bottom:8px;inset-inline-start:8px}
+  #hero.mini .val{font-size:17px}
+  #navpad{bottom:8px}
+}
+/* tablets in portrait have room for three readout tiles per row and a larger stage */
+@media (min-width:600px) and (max-width:1024px) and (orientation:portrait){
+  .reads{display:grid;grid-template-columns:repeat(3,1fr);overflow:visible}
+  .reads .read{min-width:0;max-width:none} .reads .read.wide{grid-column:1 / -1}
+  #app{--stage-h:56dvh}
+}
+/* phones in landscape: narrower panel, compact header */
+@media (max-width:1024px) and (max-height:520px) and (orientation:landscape){
+  #app{flex-direction:row}
+  #stage{flex:1 1 auto;min-height:0}
+  #panel{flex:0 0 min(340px,44vw);max-width:min(340px,44vw);border-top:0;border-inline-end:1px solid var(--c-line)}
+  #split{display:none}
+  .brandbar{padding:6px 10px}
+  .brandbar .kicker{display:none}
+  .brandbar .ltitle{font-size:13.5px;line-height:1.3;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .brandbar img{height:24px}
+  .reads{display:grid;grid-template-columns:1fr 1fr;overflow:visible}
+  .reads .read{min-width:0;max-width:none}
+}
+@media (hover:none){ .tb:hover,.btn:hover,.chip:hover{border-color:var(--c-line)} }
 .lab3.grab.tap{pointer-events:auto;cursor:pointer;font-size:14px;padding:4px 12px}
 .ctl .chips.go .chip{font-weight:700;background:var(--c-tint);border-color:var(--c-primary);color:var(--c-primary-dark)}
 </style>
@@ -2313,7 +2362,7 @@ let renderer, scene, camera, controls, stageEl, canvas, labelsEl;
 let lightRig = null, floorGroup = null;
 const defs = [];
 let cur = null;           // current experiment runtime
-let speed = 1, paused = false, simT = 0, stepOnce = false;
+let speed = 1, paused = false, simT = 0, stepOnce = false, mountT = 0;
 let labelsOn = true, floorOn = true;
 const uiSaved = {};
 
@@ -3039,7 +3088,7 @@ function openStep(n, on, only) {
   const s = stepEl(n); if (!s || s.hidden) return;
   if (only) document.querySelectorAll('#steps .step').forEach(x => { if (x !== s) x.classList.remove('open'); });
   s.classList.toggle('open', on !== false); s.classList.remove('pulse');
-  if (on !== false && only) setTimeout(() => s.scrollIntoView({ behavior: 'smooth', block: 'nearest' }), 60);
+  if (on !== false && only && performance.now() - mountT > 2500) setTimeout(() => s.scrollIntoView({ behavior: 'smooth', block: 'nearest' }), 60);   // v3: never scroll the title and readings away on load
 }
 function markDone(n) { const s = stepEl(n); if (s) s.classList.add('done'); }
 function pulseStep(n) { const s = stepEl(n); if (s && !s.classList.contains('open')) s.classList.add('pulse'); }
@@ -3357,6 +3406,19 @@ function heroOne(g, H) {
   }
   m.traverse(o => { if (o.isMesh) { o.raycast = () => {}; o.userData.noOcclude = false; } });
   g.add(m);
+}
+/* v3 · phones / tablets: drag the bar between the stage and the panel to resize; double-tap toggles big panel / big stage */
+function setupSplit() {
+  const panel = $('#panel'); if (!panel || $('#split')) return;
+  const bar = el('div', null); bar.id = 'split'; bar.setAttribute('role', 'separator'); bar.setAttribute('aria-label', 'تغيير حجم المشهد'); panel.prepend(bar);
+  const app = $('#app');
+  const setH = pct => { pct = Math.max(22, Math.min(78, pct)); app.style.setProperty('--stage-h', pct + 'dvh'); try { localStorage.setItem('phys3d:split', String(Math.round(pct))); } catch (e) { } };
+  try { const v = +localStorage.getItem('phys3d:split'); if (v >= 22 && v <= 78) app.style.setProperty('--stage-h', v + 'dvh'); } catch (e) { }
+  let drag = null, lastTap = 0;
+  bar.addEventListener('pointerdown', e => { drag = { y: e.clientY, h: stageEl.getBoundingClientRect().height }; bar.setPointerCapture(e.pointerId); e.preventDefault(); });
+  bar.addEventListener('pointermove', e => { if (!drag) return; const H = window.innerHeight || 1; setH((drag.h + (e.clientY - drag.y)) / H * 100); });
+  const end = e => { if (!drag) return; drag = null; const now = performance.now(); if (now - lastTap < 320) { const cur_ = stageEl.getBoundingClientRect().height / (window.innerHeight || 1) * 100; setH(cur_ > 45 ? 30 : 56); } lastTap = now; };
+  bar.addEventListener('pointerup', end); bar.addEventListener('pointercancel', end);
 }
 function setupNavAndCoach() {
   const pad = el('div', null); pad.id = 'navpad'; pad.setAttribute('role', 'group'); pad.setAttribute('aria-label', 'التحكّم بالكاميرا');
@@ -4263,7 +4325,7 @@ function teardown() {
   cur = null;
 }
 function mount(i, keepView) {
-  teardown();
+  teardown(); mountT = performance.now();
   const def = defs[i];
   document.querySelectorAll('#tabs button').forEach((b, j) => b.setAttribute('aria-selected', i === j));
   try { localStorage.setItem('phys3d:tab:' + (META.code || ''), String(i)); } catch (e) { }
@@ -4418,6 +4480,7 @@ window.Lab = {
     loadUi();
     initRenderer();
     setupNavAndCoach();
+    setupSplit();
     // one-experiment build: keep only the selected definition
     if (META.only != null && defs[META.only]) { const d = defs[META.only]; defs.length = 0; defs.push(d); }
     // tabs

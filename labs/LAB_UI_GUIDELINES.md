@@ -154,6 +154,10 @@ Then open the file and check:
 2. Toolbar: `شاهد المحاكاة · ماذا ألمس؟ · المزيد` (+ ⏸ only for time-based lessons).
 3. Do step 1 by hand: it ticks, the pointer moves to the next object, the readings change.
 4. Nothing in the page downloads a file.
-5. Phone width (390 px): stage on top, panel below, steps readable in full.
+5. Devices (the engine handles these; just confirm): phone portrait (390×844) → stage on top (52 dvh), a grey drag bar
+   between stage and panel (drag to resize, double-tap to toggle), one-line brand header, readings as one horizontal
+   strip; phone landscape (844×390) → panel 340 px on the side; tablet portrait (768×1024) → stage 56 dvh, three readout
+   tiles per row; tablet landscape and desktop → side panel 372 px. No horizontal page scroll at any width.
+   `labs/tools/inventory.js` runs at 1280×800; for the device shots use the same Playwright setup with `isMobile`/`hasTouch`.
 
 The 36 lessons in `labs/` pass this check with zero errors (Chromium, software GL).
