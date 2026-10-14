@@ -172,7 +172,9 @@ JS = r'''<script>
       let h = c ? c.html : '▶ اضغط تشغيل لتشاهد التجربة خطوة بخطوة.';
       if (c && guess != null && !c.ask) h += '<span class="guess">' + (last(TL.chapters, c.t) === verdictCh ? verdict() : 'توقّعك: «' + esc(guess) + '»') + '</span>';
       cap.innerHTML = h;
-      if (c && c.ask && !answered.has(ci) && !v.paused) showAsk(ci, c); }
+      if (c && c.ask && !TL.narrated && !answered.has(ci) && !v.paused) showAsk(ci, c); }
+    // narrated video: pause only after the voice has finished asking (end of the question's segment)
+    if (TL.narrated) { const c = TL.cues[ci]; if (c && c.ask && !answered.has(ci) && !v.paused) { const end = ci + 1 < TL.cues.length ? TL.cues[ci + 1].t : TL.duration; if (t >= end - 0.15) showAsk(ci, c); } }
     const ri = last(TL.reads, t);
     if (ri !== curRead) { curRead = ri; const r = TL.reads[ri];
       let h = ''; if (r) { if (r.cap) h += '<div class="hero"><div class="k">' + esc(r.cap) + '</div><div class="v">' + esc(r.val) + '</div></div>';
