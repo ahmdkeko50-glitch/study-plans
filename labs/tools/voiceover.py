@@ -1,7 +1,10 @@
 #!/usr/bin/env python3
 """Add a spoken narration to a recorded demo (frames + timeline.json from record-demo.js).
 
-  python3 voiceover.py <frames-dir> <narration.json> <voice-dir> <out-dir>
+  python3 voiceover.py <frames-dir> <narration.json> <voice-dir | -> <out-dir>
+
+- A RECORDED voice (e.g. an ElevenLabs take of the lines): the narration json has "audio" (file next to the json)
+  and "segments" ([start, end] seconds of each line in that file); pass "-" as voice-dir.
 
 - Synthesizes each narration line offline with a sherpa-onnx / Piper voice (voice-dir = an unpacked
   vits-piper-* package from github.com/k2-fsa/sherpa-onnx/releases/tag/tts-models).
@@ -11,21 +14,32 @@
 - Writes <out-dir>/frames/f%05d.jpg (symlinks), <out-dir>/timeline.json, <out-dir>/narration.wav.
 """
 import json, os, sys
-import numpy as np, soundfile as sf, sherpa_onnx
+import numpy as np, soundfile as sf
 
 FR, NAR, VOICE, OUT = sys.argv[1:5]
 tl = json.load(open(os.path.join(FR, 'timeline.json'), encoding='utf-8'))
 nar = json.load(open(NAR, encoding='utf-8'))
 lines, fps, cues = nar['lines'], tl['fps'], tl['cues']
 assert len(lines) == len(cues), f'{len(lines)} narration lines for {len(cues)} captions'
-onnx = [f for f in os.listdir(VOICE) if f.endswith('.onnx')][0]
-tts = sherpa_onnx.OfflineTts(sherpa_onnx.OfflineTtsConfig(model=sherpa_onnx.OfflineTtsModelConfig(
-    vits=sherpa_onnx.OfflineTtsVitsModelConfig(model=f'{VOICE}/{onnx}', tokens=f'{VOICE}/tokens.txt', data_dir=f'{VOICE}/espeak-ng-data'), num_threads=4)))
 LEAD, GAP = 0.15, 0.35          # silence before a line, minimum breath after it
 clips, sr = [], None
-for ln in lines:
-    a = tts.generate(ln, sid=0, speed=float(nar.get('speed', 1.0))); sr = a.sample_rate
-    x = np.array(a.samples, dtype=np.float32); x /= max(1e-6, np.abs(x).max()); clips.append(x * 0.9)
+if nar.get('audio'):            # recorded take: cut line i out of the file at segments[i]
+    import subprocess
+    sr = 44100; raw = subprocess.run(['ffmpeg', '-v', 'error', '-i', os.path.join(os.path.dirname(NAR), nar['audio']),
+                                      '-f', 'f32le', '-ac', '1', '-ar', str(sr), '-'], capture_output=True, check=True).stdout
+    full = np.frombuffer(raw, dtype=np.float32); full = full / max(1e-6, np.abs(full).max()) * 0.9
+    assert len(nar['segments']) == len(lines), 'one [start, end] segment per line'
+    fade = np.linspace(0, 1, int(0.01 * sr), dtype=np.float32)
+    for a, b in nar['segments']:
+        x = full[int(a * sr):int(b * sr)].copy(); x[:len(fade)] *= fade; x[-len(fade):] *= fade[::-1]; clips.append(x)
+else:
+    import sherpa_onnx
+    onnx = [f for f in os.listdir(VOICE) if f.endswith('.onnx')][0]
+    tts = sherpa_onnx.OfflineTts(sherpa_onnx.OfflineTtsConfig(model=sherpa_onnx.OfflineTtsModelConfig(
+        vits=sherpa_onnx.OfflineTtsVitsModelConfig(model=f'{VOICE}/{onnx}', tokens=f'{VOICE}/tokens.txt', data_dir=f'{VOICE}/espeak-ng-data'), num_threads=4)))
+    for ln in lines:
+        a = tts.generate(ln, sid=0, speed=float(nar.get('speed', 1.0))); sr = a.sample_rate
+        x = np.array(a.samples, dtype=np.float32); x /= max(1e-6, np.abs(x).max()); clips.append(x * 0.9)
 # holds: frame index → extra frames inserted before it
 holds = {}
 for i, c in enumerate(cues):

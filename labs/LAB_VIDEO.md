@@ -81,7 +81,19 @@ segment, the picture holds on the last frame of that segment until the line ends
 chapter shifts by the same amount. The player pauses at the prediction question only after the voice has finished
 asking it. Lesson 1-4: 89 s of picture + 27 s of holds = 115 s; audio AAC 64 kb/s mono.
 
-**For a real Iraqi accent:** Microsoft's neural voices `ar-IQ-BasselNeural` (male) and `ar-IQ-RanaNeural` (female) are
+**Recorded voice (used now in lesson 1-4): Sufyan, ElevenLabs.** `voiceover/L1-4.sufyan.mp3` is one take of all 18 lines;
+`voiceover/L1-4.sufyan.json` has the same lines plus `"audio"` and `"segments"` (start and end second of each line in the
+take, cut at its pauses). Pass `-` instead of a voice folder:
+```bash
+bash labs/tools/make-video.sh labs/L1-4-dielectric.html labs/L1-4-with-video.html work ../voiceover/L1-4.sufyan.json -
+```
+For another lesson or a new take: paste the json's lines into ElevenLabs in order, with a short pause between lines, then
+find the pauses (`ffmpeg -i take.mp3 -af silencedetect=noise=-40dB:d=0.3 -f null -`) and write one `[start, end]` per line.
+If two lines run together with no pause, split them at the quietest point between them. Check: every line must start at its
+own caption (the Whisper check in the build notes shows the words heard in each caption's window).
+Lesson 1-4 with this voice: 89 s of picture + 22 s of holds = 111 s.
+
+**For a real Iraqi accent with a free voice:** Microsoft's neural voices `ar-IQ-BasselNeural` (male) and `ar-IQ-RanaNeural` (female) are
 genuine Iraqi Arabic. They need an internet connection to Microsoft's speech service, which was blocked in the machine
 used to build these files. On a computer with normal internet: `pip install edge-tts`, synthesize each line with
 `edge-tts --voice ar-IQ-BasselNeural --text "…" --write-media lineN.mp3`, and place the clips the same way (or adapt

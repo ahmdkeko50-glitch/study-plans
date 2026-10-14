@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 # One command: record a lesson's guided demo in high quality, encode it, and embed it in a COPY of the 3D lesson.
 #   bash make-video.sh ../L1-4-dielectric.html ../L1-4-with-video.html [work-dir] [narration.json voice-dir]
-# With narration.json + voice-dir (an unpacked sherpa-onnx Piper voice), an offline spoken narration is added.
+# With narration.json + voice-dir (an unpacked sherpa-onnx Piper voice), an offline spoken narration is added;
+# with a recorded-voice narration.json (has "audio" + "segments", e.g. ../voiceover/L1-4.sufyan.json) pass "-" as voice-dir.
 # The original lesson file is not changed. Also leaves an .mp4 next to the output (for Telegram / YouTube).
 set -euo pipefail
 SRC="$1"; OUT="$2"; WORK="${3:-$(mktemp -d)}"; NAR="${4:-}"; VOICE="${5:-}"
