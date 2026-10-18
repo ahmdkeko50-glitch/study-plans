@@ -1,7 +1,8 @@
 # فيديو التجربة داخل المختبر — Embedded experiment video (complete guide)
 
-This guide explains how `labs/L1-4-with-video.html` was designed and built: the 3D lesson with a narrated video of its own
-guided demo embedded **inside the same file**. Follow it to get the same result for any lesson in `labs/`.
+This guide explains how the `labs/L*-with-video.html` files were designed and built: each is the 3D lesson with a narrated
+video of its own guided demo embedded **inside the same file**. All 36 lessons have one (1-4 with the recorded «Sufyan» voice,
+the other 35 with the offline voice and their own Iraqi script in `voiceover/`). Follow it to get the same result for any lesson.
 It covers why it was made this way, the full build pipeline with every setting, how the player is designed, the spoken
 narration (recorded voice or offline TTS), the checks, and the pitfalls that were already fixed.
 
@@ -70,14 +71,17 @@ The original lesson file (`L1-4-dielectric.html`) is never changed; the video ve
 labs/
   L1-4-dielectric.html        original 3D lesson (never modified by this pipeline)
   L1-4-with-video.html        RESULT: 3D lesson + embedded narrated video (≈16.6 MB)
-  L1-4-with-video.mp4         the same video alone (for Telegram / YouTube), ≈10.5 MB
+  L1-5-with-video.html …      the same for the other 35 lessons (≈10–16 MB each)
   voiceover/
     L1-4.ar-iq.json           narration script: 18 Iraqi lines, one per caption (for offline TTS)
+    L<code>-0.json            script of every other lesson (experiment 0), one line per caption
+    L<code>-0.txt             the same lines as plain paragraphs, ready to paste into ElevenLabs
     L1-4.sufyan.mp3           recorded take of those 18 lines (ElevenLabs voice "Sufyan")
     L1-4.sufyan.json          same lines + "audio" + "segments" (where each line is in the take)
   tools/
     make-video.sh             one command: record → narrate → encode → poster → embed → copy mp4
-    record-demo.js            Playwright recorder with virtual clock → frames + timeline.json
+    record-demo.js            Playwright recorder with virtual clock → frames + timeline.json (DRY=1: captions only, seconds)
+    button-test.js            clicks every control / toolbar / menu item of every lab, reports errors and dead buttons
     voiceover.py              places narration lines on captions, inserts holds, mixes narration.wav
     embed-video.py            patches a COPY of the lesson and inserts player + video + timeline
 ```
@@ -95,7 +99,12 @@ bash make-video.sh ../L1-4-dielectric.html ../L1-4-with-video.html work
 bash make-video.sh ../L1-4-dielectric.html ../L1-4-with-video.html work ../voiceover/L1-4.sufyan.json -
 # with an offline TTS voice
 bash make-video.sh ../L1-4-dielectric.html ../L1-4-with-video.html work ../voiceover/L1-4.ar-iq.json ./vits-piper-ar_JO-kareem-medium
+# any other lesson: the script voiceover/<CODE>-<tab>.json is found automatically
+bash make-video.sh ../L2-3.html ../L2-3-with-video.html work23 ./vits-piper-ar_JO-kareem-medium
 ```
+A lesson file with several experiments (tabs) gets one video per experiment: `make-video.sh` records each tab into
+`work/<tab>/frames`, and the player shows a switcher «1 · … / 2 · …». (The lessons in `labs/` are one-experiment builds,
+`LAB_META.only`, so each has one video.)
 - `work/` keeps the frames. If `work/frames/timeline.json` already exists, recording is skipped.
 - Recording takes about 30 minutes on a CPU-only machine. With frames reused, changing the voice or words takes about 30 seconds.
 
@@ -103,9 +112,15 @@ bash make-video.sh ../L1-4-dielectric.html ../L1-4-with-video.html work ../voice
 
 ### 5.1 Record — `record-demo.js`
 ```bash
-node record-demo.js <lesson.html> <frames-dir> 1024 576 24 1 1.875
-#                                              W    H   fps pace dpr  → 1920×1080 JPEG frames
+NOAA=1 node record-demo.js <lesson.html> <frames-dir> 1024 576 20 1 1.5 [tab]
+#                                                    W    H   fps pace dpr  → 1536×864 JPEG frames
 ```
+Speed on a 4-core machine without GPU (software rendering): about 2 frames per second, so a 80-second demo takes ≈15 minutes;
+all 35 lessons ≈ 8 hours. Run lessons **one after another**: software rendering already uses every core, two at a time is
+slower in total. `NOAA=1` turns MSAA off in the copy (≈25 % faster; the 1.5× supersampling + downscale keeps edges smooth).
+1-4 was recorded at `24 fps, dpr 1.875` (≈1 fps to record); the others at `20 fps, dpr 1.5`.
+`DRY=1` skips drawing and screenshots and only writes `timeline.json` (≈10 s per lesson): use it to read the captions and
+write the script before the long recording.
 What it does:
 1. Writes a temporary copy `_lesson.html` next to the frames. The lesson itself is never touched. The copy has two changes:
    - `DEMO_PACE = 1.35` → `DEMO_PACE = 1`. The live lab is slow on purpose; the video is a little brisker.
@@ -154,7 +169,7 @@ Poster: `ffmpeg -ss 2 -i video.mp4 -frames:v 1 -q:v 3 poster.jpg`.
 
 ### 5.4 Embed — `embed-video.py`
 ```bash
-python3 embed-video.py <lesson.html> <video.mp4|.webm> <poster.jpg> <timeline.json> <out.html>
+python3 embed-video.py <lesson.html> <out.html> <timeline.json>:<video.mp4|.webm>:<poster.jpg> [one triple per experiment …]
 ```
 1. Finds the correct prediction answer in the lesson: `ctx.predict({ … options: [...], correct: N })`.
 2. Patches **five places** in the copy (§7.1). If any patch target is missing, it stops with
@@ -164,7 +179,7 @@ python3 embed-video.py <lesson.html> <video.mp4|.webm> <poster.jpg> <timeline.js
 4. Prints the size, the number of chapters and cues, and the correct answer, e.g.
    `15.77 MB | chapters 6 | cues 18 | correct تنخفض`.
 
-`make-video.sh` runs 5.1 → 5.4 and copies the mp4 next to the output.
+`make-video.sh` runs 5.1 → 5.4 for every experiment (`MP4=1` also leaves the mp4 files next to the output).
 
 ## 6. `timeline.json` format
 
@@ -195,7 +210,7 @@ found by binary search. `embed-video.py` adds `"correct": "<text of the right op
   … lesson (engine v3 + LAB_SIMPLE recipe + lesson script) …
   [#vlayer player overlay]
   <script type="application/json" id="vtl"> timeline + correct </script>
-  <script type="text/plain" id="vdata"> base64 mp4 </script>      ← ~96 % of the file size
+  <script type="text/plain" id="vdata0"> base64 mp4 of experiment 1 </script>   ← ~96 % of the file size (vdata1, vdata2 … for more experiments)
   <script> player JS </script>
   <script>Lab.start();</script>
 </body>
@@ -328,6 +343,14 @@ compare the result with that cue's `say` text. Every window should contain its o
 Lesson 1-4 (Sufyan): 17 of 18 windows match 0.70–0.96. The question line scores low only because Whisper repeats a letter;
 checked alone, it is complete.
 
+## 9.6 How the 35 scripts were written
+1. `DRY=1 node record-demo.js ../L2-3.html dry/L2-3-0 480 270 24 1 1 0` → captions with times.
+2. A sheet per lesson: index, start, duration, caption, the question and its options.
+3. One Iraqi line per caption following §9.1 (about 11–13 characters per second of the caption; numbers in words; the
+   question line ends «اختار جوابك.»; first line «هلا بيكم!», last line «هسّه دورك! …»).
+4. Checked automatically: one line per caption, no digits / Latin letters / «گ» / «چ», question line ending.
+5. After the build, every caption window of the narration was transcribed with Whisper and compared with its line (§9.5).
+
 ## 10. Requirements on the lesson
 
 - The lesson uses the v3 engine (see `LAB_UI_GUIDELINES.md`) and has a guided demo `ctx.demo({...})`. All 36 lessons in `labs/` do.
@@ -346,6 +369,13 @@ bash make-video.sh ../L2-3.html ../L2-3-with-video.html work23 ../voiceover/L2-3
 The cue texts are in `timeline.json` under `cues[i].html`; write narration line *i* for cue *i*.
 
 ## 11. Checks before sharing
+
+0. `OUT=buttons.json node tools/button-test.js labs/L*.html` — every button, slider, toggle, chip, choice, ✋ label,
+   prediction, toolbar and ⋯ menu item is clicked; page errors, controls that change nothing, and a reset that does not
+   return to the start are listed (in the video copies it also opens and closes the video). All 36 lessons and their
+   video copies: no page errors. Items it lists that are fine: speed buttons and «⟲ إعادة الزاوية» when already at that
+   value/view, «ملء الشاشة» (no fullscreen in a headless browser), a «سجّل»/«أعِد الشحن» button when there is nothing to
+   record or the capacitor is already charged, a prediction option after the prediction was revealed.
 
 1. `git diff --quiet labs/<original>.html`: the original is unchanged.
 2. `ffprobe <out>.mp4`: one h264 and one aac stream, the same duration.
