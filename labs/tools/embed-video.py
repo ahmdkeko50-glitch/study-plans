@@ -8,18 +8,26 @@ The copy is the same interactive lab, plus a video player that opens over it fro
 While the video is open the 3D rendering is paused, so the phone only decodes video.
 Captions and live readings are shown as large text synced to the video; the video pauses at the prediction question.
 
-  python3 embed-video.py <lesson.html> <video.mp4> <poster.jpg> <timeline.json> <out.html>
+  python3 embed-video.py <lesson.html> <out.html> <timeline.json>:<video.mp4>:<poster.jpg> [more triples …]
+
+One triple per experiment (tab) of the lesson; timeline.json says which tab it belongs to ("tab", from record-demo.js).
+The buttons open the video of the experiment that is on screen; a lesson with several videos gets a switcher in the
+player, and «جرّب بنفسك» goes to the experiment of the video that was watched.
 """
 import base64, json, re, sys, html as H
 
-SRC, MP4, POSTER, TL, OUT = sys.argv[1:6]
+SRC, OUT = sys.argv[1:3]
+ITEMS = [a.split(':') for a in sys.argv[3:]]
+assert ITEMS, 'give at least one timeline.json:video.mp4:poster.jpg'
 s = open(SRC, encoding='utf-8').read()
-tl = json.load(open(TL, encoding='utf-8'))
 lesson_js = s[s.index('<script>// @lesson'):]
-pm = re.search(r"ctx\.predict\(\{.*?options: \[(.*?)\],\s*correct: (\d+)", lesson_js, re.S)
-correct_text = ''
-if pm:
-    opts = re.findall(r"'((?:[^'\\]|\\.)*)'", pm.group(1)); k = int(pm.group(2)); correct_text = opts[k] if k < len(opts) else ''
+defs = lesson_js.split('Lab.define(')[1:]          # one chunk per experiment, in tab order
+mo = re.search(r'LAB_META = \{[^}]*"only": (\d+)', s)   # one-experiment build: only that definition is shown
+if mo: defs = [defs[int(mo.group(1))]]
+def correct_of(tab):
+    pm = re.search(r"ctx\.predict\(\{.*?options: \[(.*?)\],\s*correct: (\d+)", defs[tab] if tab < len(defs) else '', re.S)
+    if not pm: return ''
+    opts = re.findall(r"'((?:[^'\\]|\\.)*)'", pm.group(1)); k = int(pm.group(2)); return opts[k] if k < len(opts) else ''
 
 def rep(a, b, count=1):
     global s
@@ -38,11 +46,13 @@ rep("function loop(now) {\n  requestAnimationFrame(loop);",
 rep('<div id="tabs" role="tablist" hidden></div>',
     '<button type="button" id="vopen" class="vopen">🎬 شاهد التجربة فيديو <small>أخفّ على الهاتف</small></button>\n      <div id="tabs" role="tablist" hidden></div>')
 
-poster = 'data:image/jpeg;base64,' + base64.b64encode(open(POSTER, 'rb').read()).decode()
-vid_b64 = base64.b64encode(open(MP4, 'rb').read()).decode()
-MIME = 'video/webm' if MP4.lower().endswith('.webm') else 'video/mp4'
-chap_btns = ''.join('<button type="button" data-t="%s"><span>%s</span><span class="tm ltr">%d:%02d</span></button>' % (c['t'], H.escape(c['title']), int(c['t']) // 60, int(c['t']) % 60) for c in tl['chapters'])
-
+VIDS, DATA = [], ''
+for k, (tlp, mp4, poster) in enumerate(ITEMS):
+    tl = json.load(open(tlp, encoding='utf-8')); tab = int(tl.get('tab', 0))
+    mime = 'video/webm' if mp4.lower().endswith('.webm') else 'video/mp4'
+    VIDS.append(dict(tl, correct=correct_of(tab), mime=mime, poster='data:image/jpeg;base64,' + base64.b64encode(open(poster, 'rb').read()).decode()))
+    DATA += '<script type="text/plain" id="vdata%d">%s</script>\n' % (k, base64.b64encode(open(mp4, 'rb').read()).decode())
+VIDS.sort(key=lambda v: v.get('tab', 0))
 CSS = r'''<style>
 .vopen{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;min-height:48px;margin:0 0 10px;border:0;border-radius:12px;background:#ffd166;color:#3a2a00;font:inherit;font-size:15px;font-weight:800;cursor:pointer;touch-action:manipulation}
 .vopen small{font-weight:600;font-size:12px;opacity:.8}
@@ -88,15 +98,21 @@ CSS = r'''<style>
 .vl-chap button .tm{display:block;font-size:11px;color:#9fc7cc;font-weight:500}
 .vl-chap button[aria-current="true"]{background:#08798c;border-color:#08798c}
 /* wide screens: video and text side by side */
+.vl-tabs{display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;padding:8px 12px 0;max-width:1400px;margin:0 auto}
+.vl-tabs::-webkit-scrollbar{display:none}
+.vl-tabs[hidden]{display:none}
+.vl-tabs button{flex:0 0 auto;min-height:40px;max-width:72vw;padding:4px 12px;border-radius:10px;border:1px solid rgba(255,255,255,.22);background:transparent;color:#fff;font:inherit;font-size:13.5px;font-weight:700;cursor:pointer;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;touch-action:manipulation}
+.vl-tabs button[aria-pressed="true"]{background:#ffd166;border-color:#ffd166;color:#3a2a00}
 @media (min-width:1000px) and (min-aspect-ratio:4/3){ .vl-body{display:grid;grid-template-columns:minmax(0,1fr) 340px;gap:14px;max-width:1400px} .vl-side{margin-top:0} .vl-side .vl-cap{margin-top:0} }
 </style>'''
 
 LAYER = f'''<div id="vlayer" hidden role="dialog" aria-label="فيديو التجربة">
-  <div class="vl-top"><b>🎬 فيديو التجربة</b><button type="button" id="vclose">✋ جرّب بنفسك ✕</button></div>
+  <div class="vl-top"><b id="vtitle">🎬 فيديو التجربة</b><button type="button" id="vclose">✋ جرّب بنفسك ✕</button></div>
+  <div class="vl-tabs" id="vtabs" role="group" aria-label="اختر التجربة" hidden></div>
   <div class="vl-body">
     <div class="vl-main">
       <div class="vl-player">
-        <video id="vid" controls playsinline webkit-playsinline preload="none" poster="{poster}"></video>
+        <video id="vid" controls playsinline webkit-playsinline preload="none" ></video>
         <div class="vl-load" id="vload" hidden>جارٍ تجهيز الفيديو…</div>
         <div id="vask" hidden><div class="q"></div><div class="opts"></div><button type="button" class="skip">تخطَّ وتابع ▶</button></div>
         <div id="vend" hidden><p>🎬 انتهى الفيديو. الآن دورك!</p><div><button type="button" class="go">✋ جرّب التجربة بنفسك</button><button type="button" class="again">↻ شاهد مرّة أخرى</button></div></div>
@@ -106,66 +122,101 @@ LAYER = f'''<div id="vlayer" hidden role="dialog" aria-label="فيديو الت�
     <div class="vl-side">
       <div class="vl-cap" id="vcap" aria-live="polite">▶ اضغط تشغيل لتشاهد التجربة خطوة بخطوة.</div>
       <div class="vl-read" id="vread"></div>
-      <div class="vl-chap" id="vchap">{chap_btns}</div>
+      <div class="vl-chap" id="vchap"></div>
     </div>
   </div>
 </div>
-<script type="application/json" id="vtl">{json.dumps(dict(tl, correct=correct_text), ensure_ascii=False).replace('</', '<\\/')}</script>
-<script type="text/plain" id="vdata">{vid_b64}</script>
-'''
+<script type="application/json" id="vtl">{json.dumps(VIDS, ensure_ascii=False).replace('</', '<\\/')}</script>
+{DATA}'''
 
 JS = r'''<script>
 (function () {
   const $ = q => document.querySelector(q);
-  const TL = JSON.parse($('#vtl').textContent), layer = $('#vlayer'), v = $('#vid'), MIME = __MIME__;
-  let srcReady = null;
+  const VIDS = JSON.parse($('#vtl').textContent), layer = $('#vlayer'), v = $('#vid');
+  let K = -1, TL = null;                                   // current video and its timeline
+  const srcs = {};
+  const labTab = () => { const b = [...document.querySelectorAll('#tabs button')]; const i = b.findIndex(x => x.getAttribute('aria-selected') === 'true'); return i < 0 ? 0 : i; };
   function loadSrc() {
-    if (srcReady) return srcReady;
-    const load = $('#vload'); load.hidden = false;
-    const b64 = $('#vdata').textContent.trim();
+    const k = K; if (srcs[k]) return srcs[k];
+    const load = $('#vload'); load.hidden = false; load.textContent = 'جارٍ تجهيز الفيديو…';
+    const b64 = $('#vdata' + k).textContent.trim(), MIME = VIDS[k].mime;
     const viaAtob = () => { const bin = atob(b64), u = new Uint8Array(bin.length); for (let i = 0; i < bin.length; i++) u[i] = bin.charCodeAt(i); return new Blob([u], { type: MIME }); };
-    srcReady = (window.fetch ? fetch('data:' + MIME + ';base64,' + b64).then(r => r.blob()).catch(viaAtob) : Promise.resolve(viaAtob()))
-      .then(blob => { v.src = URL.createObjectURL(blob); v.preload = 'auto'; return new Promise(r => v.addEventListener('loadeddata', r, { once: true })); })
-      .then(() => { load.hidden = true; v.playbackRate = v.defaultPlaybackRate; })
-      .catch(() => { load.textContent = 'تعذّر تشغيل الفيديو على هذا المتصفّح.'; });
-    return srcReady;
+    srcs[k] = (window.fetch ? fetch('data:' + MIME + ';base64,' + b64).then(r => r.blob()).catch(viaAtob) : Promise.resolve(viaAtob()))
+      .then(blob => URL.createObjectURL(blob))
+      .catch(() => { delete srcs[k]; load.textContent = 'تعذّر تشغيل الفيديو على هذا المتصفّح.'; throw new Error('video'); });
+    return srcs[k];
   }
-  window.openLabVideo = function () {
+  function ready() {           // the current video's data is attached and decodable
+    const k = K;
+    return loadSrc().then(url => { if (k !== K) throw new Error('switched'); if (v.dataset.k !== String(k)) { v.dataset.k = k; v.src = url; v.preload = 'auto';
+      return new Promise(r => v.addEventListener('loadeddata', r, { once: true })); } })
+      .then(() => { $('#vload').hidden = true; v.playbackRate = v.defaultPlaybackRate; });
+  }
+  // fullscreen subtitles, one track per video
+  const plain = h => { const d = document.createElement('div'); d.innerHTML = h.replace(/<br\s*\/?>/g, '\n'); return d.textContent.replace(/[ \t]+/g, ' ').trim(); };
+  const ts = t => { const h = Math.floor(t / 3600), m = Math.floor(t / 60) % 60, s = (t % 60).toFixed(3).padStart(6, '0'); return String(h).padStart(2, '0') + ':' + String(m).padStart(2, '0') + ':' + s; };
+  let fsOn = false;
+  const fsSubs = on => { fsOn = on; for (const t of v.textTracks) t.mode = on ? 'showing' : 'hidden'; };
+  function setTrack() {
+    v.querySelectorAll('track').forEach(t => t.remove());
+    let vtt = 'WEBVTT\n\n';
+    TL.cues.forEach((c, i) => { const e = i + 1 < TL.cues.length ? TL.cues[i + 1].t : TL.duration; if (e > c.t) vtt += ts(c.t) + ' --> ' + ts(e) + '\n' + plain(c.html) + '\n\n'; });
+    const tr = document.createElement('track'); tr.kind = 'subtitles'; tr.srclang = 'ar'; tr.label = 'العربية'; tr.src = URL.createObjectURL(new Blob([vtt], { type: 'text/vtt' })); v.appendChild(tr);
+    setTimeout(() => fsSubs(fsOn), 0);
+  }
+  document.addEventListener('fullscreenchange', () => fsSubs(!!document.fullscreenElement));
+  v.addEventListener('webkitbeginfullscreen', () => fsSubs(true)); v.addEventListener('webkitendfullscreen', () => fsSubs(false));
+
+  const cap = $('#vcap'), rd = $('#vread'), chap = $('#vchap'), ask = $('#vask'), tabs = $('#vtabs');
+  let chBtns = [];
+  const last = (arr, t) => { let lo = 0, hi = arr.length - 1, k = -1; while (lo <= hi) { const m = (lo + hi) >> 1; if (arr[m].t <= t + 1e-3) { k = m; lo = m + 1; } else hi = m - 1; } return k; };
+  const esc = x => String(x).replace(/[&<>]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' })[c]);
+  let guess = null; const answered = new Set(); let curCue = -2, curRead = -2, curCh = -2, verdictCh = -1;
+  const verdict = () => (TL.correct && guess.slice(0, 6) === TL.correct.slice(0, 6)) ? '✓ <b>توقّعك صحيح!</b>' : '✗ توقّعت «' + esc(guess) + '» — قارنه بالنتيجة.';
+  // experiment switcher (lessons with several videos)
+  if (VIDS.length > 1) {
+    tabs.innerHTML = VIDS.map((x, i) => '<button type="button" data-k="' + i + '">' + (i + 1) + ' · ' + esc(x.title || ('التجربة ' + (i + 1))).replace(/^التجربة \d+\s*/, '') + '</button>').join('');
+    tabs.hidden = false;
+    tabs.querySelectorAll('button').forEach(b => b.onclick = () => { setVid(+b.dataset.k); ready().then(() => v.play().catch(() => { })).catch(() => { }); });
+  }
+  function setVid(k) {
+    if (k === K) return;
+    try { v.pause(); } catch (e) { }
+    K = k; TL = VIDS[k];
+    v.poster = TL.poster; v.removeAttribute('src'); delete v.dataset.k; try { v.load(); } catch (e) { }
+    ask.hidden = true; $('#vend').hidden = true; guess = null; answered.clear(); curCue = curRead = curCh = -2;
+    chap.innerHTML = TL.chapters.map(c => '<button type="button" data-t="' + c.t + '"><span>' + esc(c.title) + '</span><span class="tm ltr">' + Math.floor(c.t / 60) + ':' + String(Math.floor(c.t % 60)).padStart(2, '0') + '</span></button>').join('');
+    chBtns = [...chap.querySelectorAll('button')];
+    chBtns.forEach(b => b.onclick = () => { ask.hidden = true; $('#vend').hidden = true; ready().then(() => { v.currentTime = +b.dataset.t + 0.05; v.play().catch(() => { }); }).catch(() => { }); });
+    const askCue = TL.cues.find(c => c.ask), askCh = askCue ? last(TL.chapters, askCue.t) : -1;
+    verdictCh = TL.chapters.findIndex((c, i) => i > askCh && /النتيجة/.test(c.title)); if (verdictCh < 0) verdictCh = askCh + 1;
+    tabs.querySelectorAll('button').forEach((b, i) => b.setAttribute('aria-pressed', i === k));
+    $('#vtitle').textContent = '🎬 ' + (VIDS.length > 1 ? 'فيديو التجربة ' + (k + 1) : 'فيديو التجربة');
+    setTrack(); draw();
+  }
+  window.openLabVideo = function (k) {
+    if (k == null) { const t = labTab(); k = Math.max(0, VIDS.findIndex(x => (x.tab || 0) === t)); }
     window.__labHold = true;                       // the 3D lab stops rendering while the video is open
     try { if (window.Lab && Lab.stopDemo) Lab.stopDemo(); } catch (e) { }
-    layer.hidden = false; $('#vend').hidden = true;
-    loadSrc().then(() => { if (!layer.hidden) v.play().catch(() => { }); });
+    layer.hidden = false; $('#vend').hidden = true; setVid(k);
+    ready().then(() => { if (!layer.hidden) v.play().catch(() => { }); }).catch(() => { });
   };
-  function closeVideo() { try { v.pause(); } catch (e) { } layer.hidden = true; window.__labHold = false; }
+  function closeVideo() {
+    try { v.pause(); } catch (e) { } layer.hidden = true; window.__labHold = false;
+    const t = TL && (TL.tab || 0); if (t != null && t !== labTab() && window.Lab) { try { Lab.mount(t); } catch (e) { } }   // go to the experiment just watched
+  }
+  window.closeLabVideo = closeVideo;
   $('#vclose').onclick = closeVideo;
   $('#vend .go').onclick = closeVideo;
   $('#vend .again').onclick = () => { $('#vend').hidden = true; v.currentTime = 0; answered.clear(); guess = null; v.play().catch(() => { }); };
   $('#vopen').onclick = () => openLabVideo();
-  document.addEventListener('keydown', e => { if (!layer.hidden && e.key === 'Escape') closeVideo(); }, true);
+  document.addEventListener('keydown', e => { if (!layer.hidden && e.key === 'Escape') { e.stopPropagation(); closeVideo(); } }, true);
   // no WebGL → the 3D lab cannot run: open the video straight away
   let gl = null; try { const c = document.createElement('canvas'); gl = c.getContext('webgl2') || c.getContext('webgl'); } catch (e) { }
-  if (!gl) setTimeout(openLabVideo, 0);
+  if (!gl) setTimeout(() => openLabVideo(), 0);
 
-  // fullscreen subtitles
-  const plain = h => { const d = document.createElement('div'); d.innerHTML = h.replace(/<br\s*\/?>/g, '\n'); return d.textContent.replace(/[ \t]+/g, ' ').trim(); };
-  const ts = t => { const h = Math.floor(t / 3600), m = Math.floor(t / 60) % 60, s = (t % 60).toFixed(3).padStart(6, '0'); return String(h).padStart(2, '0') + ':' + String(m).padStart(2, '0') + ':' + s; };
-  let vtt = 'WEBVTT\n\n';
-  TL.cues.forEach((c, i) => { const e = i + 1 < TL.cues.length ? TL.cues[i + 1].t : TL.duration; if (e > c.t) vtt += ts(c.t) + ' --> ' + ts(e) + '\n' + plain(c.html) + '\n\n'; });
-  const tr = document.createElement('track'); tr.kind = 'subtitles'; tr.srclang = 'ar'; tr.label = 'العربية'; tr.src = URL.createObjectURL(new Blob([vtt], { type: 'text/vtt' })); v.appendChild(tr);
-  const fsSubs = on => { for (const t of v.textTracks) t.mode = on ? 'showing' : 'hidden'; };
-  fsSubs(false);
-  document.addEventListener('fullscreenchange', () => fsSubs(!!document.fullscreenElement));
-  v.addEventListener('webkitbeginfullscreen', () => fsSubs(true)); v.addEventListener('webkitendfullscreen', () => fsSubs(false));
-
-  // synced captions, readings, chapters, the prediction question
-  const cap = $('#vcap'), rd = $('#vread'), chBtns = [...document.querySelectorAll('#vchap button')], ask = $('#vask');
-  const last = (arr, t) => { let lo = 0, hi = arr.length - 1, k = -1; while (lo <= hi) { const m = (lo + hi) >> 1; if (arr[m].t <= t + 1e-3) { k = m; lo = m + 1; } else hi = m - 1; } return k; };
-  const esc = x => String(x).replace(/[&<>]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' })[c]);
-  let guess = null; const answered = new Set(); let curCue = -2, curRead = -2, curCh = -2;
-  const askCue = TL.cues.find(c => c.ask), askCh = askCue ? last(TL.chapters, askCue.t) : -1;
-  let verdictCh = TL.chapters.findIndex((c, i) => i > askCh && /النتيجة/.test(c.title)); if (verdictCh < 0) verdictCh = askCh + 1;
-  const verdict = () => (TL.correct && guess.slice(0, 6) === TL.correct.slice(0, 6)) ? '✓ <b>توقّعك صحيح!</b>' : '✗ توقّعت «' + esc(guess) + '» — قارنه بالنتيجة.';
   function draw() {
+    if (!TL) return;
     const t = v.currentTime;
     const ci = last(TL.cues, t);
     if (ci !== curCue) { curCue = ci; const c = TL.cues[ci];
@@ -192,8 +243,7 @@ JS = r'''<script>
   }
   function closeAsk() { ask.hidden = true; curCue = -2; draw(); v.play().catch(() => { }); }
   ask.querySelector('.skip').onclick = closeAsk;
-  chBtns.forEach(b => b.onclick = () => { ask.hidden = true; $('#vend').hidden = true; loadSrc().then(() => { v.currentTime = +b.dataset.t + 0.05; v.play().catch(() => { }); }); });
-  v.addEventListener('seeking', () => { ask.hidden = true; const t = v.currentTime; TL.cues.forEach((c, i) => { if (c.ask && c.t >= t - 0.05) answered.delete(i); }); draw(); });
+  v.addEventListener('seeking', () => { ask.hidden = true; const t = v.currentTime; if (TL) TL.cues.forEach((c, i) => { if (c.ask && c.t >= t - 0.05) answered.delete(i); }); draw(); });
   let raf = 0; const tick = () => { draw(); if (!v.paused && !v.ended) raf = requestAnimationFrame(tick); };
   v.addEventListener('play', () => { $('#vend').hidden = true; cancelAnimationFrame(raf); raf = requestAnimationFrame(tick); });
   v.addEventListener('timeupdate', draw); v.addEventListener('pause', draw);
@@ -202,13 +252,13 @@ JS = r'''<script>
   const setRate = r => { v.playbackRate = r; v.defaultPlaybackRate = r; sp.forEach(b => b.setAttribute('aria-pressed', +b.dataset.r === r)); try { localStorage.setItem('vlab:rate', String(r)); } catch (e) { } };
   sp.forEach(b => b.onclick = () => setRate(+b.dataset.r));
   try { const r = +localStorage.getItem('vlab:rate'); if (r >= 1 && r <= 1.5) setRate(r); } catch (e) { }
-  draw();
+  setVid(0);
 })();
-</script>'''.replace('__MIME__', json.dumps(MIME))
+</script>'''
 
 head_end = s.index('</head>')
 s = s[:head_end] + CSS + '\n' + s[head_end:]
 s = s.replace('<script>Lab.start();</script>', LAYER + JS + '\n<script>Lab.start();</script>', 1)
 assert 'id="vlayer"' in s
 open(OUT, 'w', encoding='utf-8').write(s)
-print(OUT, round(len(s) / 1048576, 2), 'MB | chapters', len(tl['chapters']), '| cues', len(tl['cues']), '| correct', correct_text)
+print(OUT, round(len(s) / 1048576, 2), 'MB |', ' | '.join('tab %d: %.0fs, %d chapters, %d cues, correct «%s»' % (x.get('tab', 0), x['duration'], len(x['chapters']), len(x['cues']), x['correct']) for x in VIDS))
