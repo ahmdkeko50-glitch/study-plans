@@ -4049,6 +4049,7 @@ function makePanel(rt) {
       const c = makeChart(host.charts, o); rt.charts.push(c); return c;
     },
     predict(o) {
+      window.__labPred = o;   // the video player reads the correct option from here
       const s = host.predict; s.hidden = false; s.innerHTML = '';
       s.appendChild(el('h2', null, '<span class="ic">🤔</span><span>توقّع قبل أن تجرّب</span>'));
       s.appendChild(el('p', 'note', o.q)).style.color = 'var(--c-ink)';
@@ -5136,7 +5137,8 @@ Lab.define({
   const last = (arr, t) => { let lo = 0, hi = arr.length - 1, k = -1; while (lo <= hi) { const m = (lo + hi) >> 1; if (arr[m].t <= t + 1e-3) { k = m; lo = m + 1; } else hi = m - 1; } return k; };
   const esc = x => String(x).replace(/[&<>]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' })[c]);
   let guess = null; const answered = new Set(); let curCue = -2, curRead = -2, curCh = -2, verdictCh = -1;
-  const verdict = () => (TL.correct && guess.slice(0, 6) === TL.correct.slice(0, 6)) ? '✓ <b>توقّعك صحيح!</b>' : '✗ توقّعت «' + esc(guess) + '» — قارنه بالنتيجة.';
+  const correctText = () => TL.correct || (window.__labPred && window.__labPred.options ? String(window.__labPred.options[window.__labPred.correct] || '') : '');
+  const verdict = () => (correctText() && guess.slice(0, 6) === correctText().slice(0, 6)) ? '✓ <b>توقّعك صحيح!</b>' : '✗ توقّعت «' + esc(guess) + '» — قارنه بالنتيجة.';
   // experiment switcher (lessons with several videos)
   if (VIDS.length > 1) {
     tabs.innerHTML = VIDS.map((x, i) => '<button type="button" data-k="' + i + '">' + (i + 1) + ' · ' + esc(x.title || ('التجربة ' + (i + 1))).replace(/^التجربة \d+\s*/, '') + '</button>').join('');
