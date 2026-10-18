@@ -43,6 +43,7 @@ i = s.index("const wb = g.querySelector('.watch');"); j = s.index('playDemo(); }
 s = s[:j] + "window.openLabVideo ? openLabVideo() : playDemo(); };" + s[j + len('playDemo(); };'):]
 rep("function loop(now) {\n  requestAnimationFrame(loop);",
     "function loop(now) {\n  requestAnimationFrame(loop);\n  if (window.__labHold) { lastT = now; return; }   // video open: no 3D rendering at all")
+rep("    predict(o) {\n      const s = host.predict;", "    predict(o) {\n      window.__labPred = o;   // the video player reads the correct option from here\n      const s = host.predict;")
 rep('<div id="tabs" role="tablist" hidden></div>',
     '<button type="button" id="vopen" class="vopen">🎬 شاهد التجربة فيديو <small>أخفّ على الهاتف</small></button>\n      <div id="tabs" role="tablist" hidden></div>')
 
@@ -172,7 +173,8 @@ JS = r'''<script>
   const last = (arr, t) => { let lo = 0, hi = arr.length - 1, k = -1; while (lo <= hi) { const m = (lo + hi) >> 1; if (arr[m].t <= t + 1e-3) { k = m; lo = m + 1; } else hi = m - 1; } return k; };
   const esc = x => String(x).replace(/[&<>]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' })[c]);
   let guess = null; const answered = new Set(); let curCue = -2, curRead = -2, curCh = -2, verdictCh = -1;
-  const verdict = () => (TL.correct && guess.slice(0, 6) === TL.correct.slice(0, 6)) ? '✓ <b>توقّعك صحيح!</b>' : '✗ توقّعت «' + esc(guess) + '» — قارنه بالنتيجة.';
+  const correctText = () => TL.correct || (window.__labPred && window.__labPred.options ? String(window.__labPred.options[window.__labPred.correct] || '') : '');
+  const verdict = () => (correctText() && guess.slice(0, 6) === correctText().slice(0, 6)) ? '✓ <b>توقّعك صحيح!</b>' : '✗ توقّعت «' + esc(guess) + '» — قارنه بالنتيجة.';
   // experiment switcher (lessons with several videos)
   if (VIDS.length > 1) {
     tabs.innerHTML = VIDS.map((x, i) => '<button type="button" data-k="' + i + '">' + (i + 1) + ' · ' + esc(x.title || ('التجربة ' + (i + 1))).replace(/^التجربة \d+\s*/, '') + '</button>').join('');
