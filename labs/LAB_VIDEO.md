@@ -91,6 +91,15 @@ and AAC. For offline TTS you also need `sherpa-onnx` and a Piper voice (§9).
 
 ## 4. Quick start: one command
 
+**All lessons at once, on a computer with a graphics card (recommended):** step-by-step setup in `RUN_ON_MY_COMPUTER.md`.
+```bash
+cd labs/tools && npm install && npx playwright install chromium
+bash make-all-videos.sh            # every lesson without a -with-video.html yet; GPU=1, 1080p frames, 24 fps, silent
+```
+With a graphics card a lesson takes 1–3 minutes instead of ≈17 on a CPU-only server. The videos are **silent** by default
+(captions and readings are shown by the player); narration is optional (§9).
+
+
 ```bash
 cd labs/tools
 # silent video

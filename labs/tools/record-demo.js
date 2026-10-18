@@ -5,6 +5,7 @@
 // width/height are the CSS layout size; dpr multiplies the rendered pixels (1024×576 at dpr 1.875 = 1920×1080 frames)
 // pace: the demo's own pacing factor (the lab uses 1.35 = slow for live viewing; 1 = brisker video)
 // Writes frames f00000.jpg … and timeline.json: chapters [{t,title}], cues [{t,html,ask?,opts?}], reads [{t,cap,val,sub,r:{label:value}}].
+// GPU=1: hardware rendering in a visible window (fast on a computer with a graphics card).
 // DRY=1: no screenshots (only timeline.json, in seconds; used to read the captions before the real recording).
 // Captions are NOT burned into the frames: the video page shows them as large text (and as WebVTT subtitles in fullscreen). Encode with ffmpeg afterwards (see LAB_VIDEO.md).
 const { chromium } = require('playwright');
@@ -39,11 +40,14 @@ const STYLE = `#panel,#split,#navpad,#toolbar,#tb-menu,#flash,#democta,#demo{dis
 #app{padding:0!important} #demo{inset-inline:22px;bottom:18px} #demo .dbox{width:min(900px,100%)} #demo .dsay{font-size:21px;line-height:1.7}
 #demo .dask button{pointer-events:none} .vthink{display:block;margin-top:6px;font-size:15px;color:#ffd166;font-weight:700}`;
 (async () => {
-  const b = await chromium.launch({ args: ['--use-gl=swiftshader', '--enable-unsafe-swiftshader', '--disable-background-timer-throttling'] });
+  // GPU=1: use the computer's graphics card (a visible browser window opens; leave it alone until the lesson is done)
+  const b = process.env.GPU
+    ? await chromium.launch({ headless: false, args: ['--ignore-gpu-blocklist', '--enable-gpu-rasterization', '--disable-background-timer-throttling', '--disable-renderer-backgrounding', '--disable-backgrounding-occluded-windows'] })
+    : await chromium.launch({ args: ['--use-gl=swiftshader', '--enable-unsafe-swiftshader', '--disable-background-timer-throttling'] });
   const ctx = await b.newContext({ viewport: { width: w, height: h }, deviceScaleFactor: +DPR });
   await ctx.addInitScript(CLOCK);
   const pg = await ctx.newPage(); pg.on('pageerror', e => console.error('pageerror', e.message));
-  await pg.goto('file://' + path.resolve(TMP));
+  await pg.goto(require('url').pathToFileURL(path.resolve(TMP)).href);
   await pg.addStyleTag({ content: STYLE });
   await pg.evaluate(() => { try { localStorage.setItem('phys3d:guide:' + (window.LAB_META.code || ''), '1'); } catch (e) { } const g = document.querySelector('#guide'); if (g) g.remove(); });
   if (process.env.DRY) await pg.evaluate(() => { const r = window.__activity.api.renderer; r.render = () => { }; });   // captions only: skip drawing

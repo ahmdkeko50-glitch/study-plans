@@ -1,0 +1,6 @@
+{
+  "name": "lab-video-tools",
+  "private": true,
+  "description": "Records each 3D lesson's guided demo and embeds it as a video inside a copy of the lesson (see ../LAB_VIDEO.md)",
+  "dependencies": { "playwright": "1.56.1" }
+}

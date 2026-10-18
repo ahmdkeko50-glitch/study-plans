@@ -8,7 +8,7 @@ The copy is the same interactive lab, plus a video player that opens over it fro
 While the video is open the 3D rendering is paused, so the phone only decodes video.
 Captions and live readings are shown as large text synced to the video; the video pauses at the prediction question.
 
-  python3 embed-video.py <lesson.html> <out.html> <timeline.json>:<video.mp4>:<poster.jpg> [more triples …]
+  python3 embed-video.py <lesson.html> <out.html> <timeline.json>|<video.mp4>|<poster.jpg> [more triples …]   (':' also accepted)
 
 One triple per experiment (tab) of the lesson; timeline.json says which tab it belongs to ("tab", from record-demo.js).
 The buttons open the video of the experiment that is on screen; a lesson with several videos gets a switcher in the
@@ -17,7 +17,7 @@ player, and «جرّب بنفسك» goes to the experiment of the video that was
 import base64, json, re, sys, html as H
 
 SRC, OUT = sys.argv[1:3]
-ITEMS = [a.split(':') for a in sys.argv[3:]]
+ITEMS = [a.split('|') if '|' in a else a.split(':') for a in sys.argv[3:]]   # '|' also works with Windows paths (C:\…)
 assert ITEMS, 'give at least one timeline.json:video.mp4:poster.jpg'
 s = open(SRC, encoding='utf-8').read()
 lesson_js = s[s.index('<script>// @lesson'):]
