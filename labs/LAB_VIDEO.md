@@ -30,7 +30,6 @@ The lesson opens as the normal interactive 3D experiment. On top of it:
 | Entry point | Where | Text |
 |---|---|---|
 | Toolbar button | replaces the live «شاهد المحاكاة» demo | **🎬 شاهد الفيديو** |
-| Yellow wide button | top of the side panel, above everything | **🎬 شاهد التجربة فيديو** *أخفّ على الهاتف* |
 | Guide card | first-visit guide | **🎬 شاهد الفيديو أوّلًا** |
 | Automatic | devices with no WebGL (the 3D cannot run) | the video opens by itself |
 
@@ -181,7 +180,7 @@ Poster: `ffmpeg -ss 2 -i video.mp4 -frames:v 1 -q:v 3 poster.jpg`.
 python3 embed-video.py <lesson.html> <out.html> <timeline.json>:<video.mp4|.webm>:<poster.jpg> [one triple per experiment …]
 ```
 1. Finds the correct prediction answer in the lesson: `ctx.predict({ … options: [...], correct: N })`.
-2. Patches **five places** in the copy (§7.1). If any patch target is missing, it stops with
+2. Patches **five places** (4 engine lines + the prediction hook) in the copy (§7.1). If any patch target is missing, it stops with
    `patch target not found` instead of writing a broken file.
 3. Adds the player CSS before `</head>`. Adds the player HTML, the timeline, the base64 video and the player JS just before
    `<script>Lab.start();</script>`.
@@ -232,7 +231,7 @@ found by binary search. `embed-video.py` adds `"correct": "<text of the right op
 | 2 | guide button text `🎬 شاهد المحاكاة أوّلًا` | `🎬 شاهد الفيديو أوّلًا` |
 | 3 | guide `.watch` handler `playDemo(); };` | `window.openLabVideo ? openLabVideo() : playDemo(); };` |
 | 4 | `function loop(now) {\n  requestAnimationFrame(loop);` | adds `if (window.__labHold) { lastT = now; return; }` (`lastT` is reset so physics does not jump after closing) |
-| 5 | `<div id="tabs" role="tablist" hidden></div>` | the yellow `#vopen` button is inserted before it |
+| 5 | engine `predict(o) {` | adds `window.__labPred = o;` so the player can read the correct prediction when the lesson builds its question in a helper |
 
 ### 7.2 Loading the video
 - `<video id="vid" controls playsinline webkit-playsinline preload="none" poster="data:image/jpeg;base64,…">`. iOS needs
@@ -262,7 +261,7 @@ found by binary search. `embed-video.py` adds `"correct": "<text of the right op
 
 ## 8. Player design
 
-Colours: background `#06262c`, caption box `#0f3a42`, accent yellow `#ffd166` (the open button, question borders, the bold
+Colours: background `#06262c`, caption box `#0f3a42`, accent yellow `#ffd166` (question borders, the bold
 words in captions), active teal `#08798c`, hero reading green `#9be0a5`. Font: the lesson's `var(--font)`.
 
 ```
