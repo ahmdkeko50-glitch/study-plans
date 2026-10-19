@@ -614,7 +614,6 @@ button,.btn,.chip,.tb,.step-h,.tgl,#navpad button,details summary{touch-action:m
       </div>
     </header>
     <div id="panel-body">
-      <button type="button" id="vopen" class="vopen">🎬 شاهد التجربة فيديو <small>أخفّ على الهاتف</small></button>
       <div id="tabs" role="tablist" hidden></div>
       <div id="head"></div>
       <div id="predict" class="sec predict" hidden></div>
@@ -5278,7 +5277,6 @@ Lab.define({
   $('#vclose').onclick = closeVideo;
   $('#vend .go').onclick = closeVideo;
   $('#vend .again').onclick = () => { $('#vend').hidden = true; v.currentTime = 0; answered.clear(); guess = null; v.play().catch(() => { }); };
-  $('#vopen').onclick = () => openLabVideo();
   document.addEventListener('keydown', e => { if (!layer.hidden && e.key === 'Escape') { e.stopPropagation(); closeVideo(); } }, true);
   // no WebGL → the 3D lab cannot run: open the video straight away
   let gl = null; try { const c = document.createElement('canvas'); gl = c.getContext('webgl2') || c.getContext('webgl'); } catch (e) { }

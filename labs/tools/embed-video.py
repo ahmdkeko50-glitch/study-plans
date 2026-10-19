@@ -44,8 +44,6 @@ s = s[:j] + "window.openLabVideo ? openLabVideo() : playDemo(); };" + s[j + len(
 rep("function loop(now) {\n  requestAnimationFrame(loop);",
     "function loop(now) {\n  requestAnimationFrame(loop);\n  if (window.__labHold) { lastT = now; return; }   // video open: no 3D rendering at all")
 rep("    predict(o) {\n      const s = host.predict;", "    predict(o) {\n      window.__labPred = o;   // the video player reads the correct option from here\n      const s = host.predict;")
-rep('<div id="tabs" role="tablist" hidden></div>',
-    '<button type="button" id="vopen" class="vopen">🎬 شاهد التجربة فيديو <small>أخفّ على الهاتف</small></button>\n      <div id="tabs" role="tablist" hidden></div>')
 
 VIDS, DATA = [], ''
 for k, (tlp, mp4, poster) in enumerate(ITEMS):
@@ -55,8 +53,6 @@ for k, (tlp, mp4, poster) in enumerate(ITEMS):
     DATA += '<script type="text/plain" id="vdata%d">%s</script>\n' % (k, base64.b64encode(open(mp4, 'rb').read()).decode())
 VIDS.sort(key=lambda v: v.get('tab', 0))
 CSS = r'''<style>
-.vopen{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;min-height:48px;margin:0 0 10px;border:0;border-radius:12px;background:#ffd166;color:#3a2a00;font:inherit;font-size:15px;font-weight:800;cursor:pointer;touch-action:manipulation}
-.vopen small{font-weight:600;font-size:12px;opacity:.8}
 #vlayer{position:fixed;inset:0;z-index:300;background:#06262c;color:#fff;overflow-y:auto;-webkit-overflow-scrolling:touch;font-family:var(--font)}
 #vlayer[hidden]{display:none}
 .vl-top{position:sticky;top:0;z-index:2;display:flex;align-items:center;gap:8px;padding:8px 12px;background:rgba(6,38,44,.96);border-bottom:1px solid rgba(255,255,255,.08)}
@@ -211,7 +207,6 @@ JS = r'''<script>
   $('#vclose').onclick = closeVideo;
   $('#vend .go').onclick = closeVideo;
   $('#vend .again').onclick = () => { $('#vend').hidden = true; v.currentTime = 0; answered.clear(); guess = null; v.play().catch(() => { }); };
-  $('#vopen').onclick = () => openLabVideo();
   document.addEventListener('keydown', e => { if (!layer.hidden && e.key === 'Escape') { e.stopPropagation(); closeVideo(); } }, true);
   // no WebGL → the 3D lab cannot run: open the video straight away
   let gl = null; try { const c = document.createElement('canvas'); gl = c.getContext('webgl2') || c.getContext('webgl'); } catch (e) { }
