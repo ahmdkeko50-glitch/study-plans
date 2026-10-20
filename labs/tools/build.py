@@ -1,6 +1,6 @@
 import re, sys, os, glob, json, importlib
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-import recipes
+import recipes, theme
 import argparse
 ap = argparse.ArgumentParser(description='Splice the reference engine + CSS into exported lesson files and inject their LAB_SIMPLE recipe')
 ap.add_argument('src', help='folder with the original exported lesson .html files (names start with <hash>-<code>_)')
@@ -27,5 +27,6 @@ for f in sorted(glob.glob(U + '/*.html')):
         rec = {k: v for k, v in rec.items() if k != 'patch'}
         block = '<script>window.LAB_SIMPLE = ' + json.dumps(rec, ensure_ascii=False) + ';</script>\n'
         i = s.index('<script>// @lesson'); s = s[:i] + block + s[i:]
+    s = theme.patch(s) or s   # ?theme=ta3leem|eschool (see THEME.md)
     open(f'{out}/L{code}.html', 'w', encoding='utf-8').write(s)
     print(code, 'recipe' if rec else 'NO RECIPE')

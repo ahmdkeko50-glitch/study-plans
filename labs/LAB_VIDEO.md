@@ -23,6 +23,9 @@ Contents
 
 ---
 
+
+> **Theme:** the player follows `?theme=` through the CSS variables (see `THEME.md`). The recorded frames keep the colours the lab had while recording; to make a ta3leem-coloured video, open the lab with `?theme=ta3leem` when recording.
+
 ## 1. What the student gets
 
 The lesson opens as the normal interactive 3D experiment. On top of it:

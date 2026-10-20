@@ -74,12 +74,12 @@ CSS = r'''<style>
 #vend[hidden]{display:none}
 #vend p{margin:0;font-size:17px;font-weight:700;line-height:1.7}
 #vend div{display:flex;gap:8px;flex-wrap:wrap;justify-content:center}
-#vend button{min-height:48px;padding:0 18px;border-radius:12px;border:0;font:inherit;font-size:15px;font-weight:800;cursor:pointer;background:#fff;color:#04525f}
+#vend button{min-height:48px;padding:0 18px;border-radius:12px;border:0;font:inherit;font-size:15px;font-weight:800;cursor:pointer;background:#fff;color:var(--c-primary-dark)}
 #vend button.go{background:#ffd166;color:#3a2a00}
 .vl-speed{display:flex;align-items:center;gap:6px;margin-top:8px;font-size:13px;color:#bfe9ef}
 .vl-speed span{margin-inline-end:auto}
 .vl-speed button{min-width:54px;min-height:36px;border-radius:10px;border:1px solid rgba(255,255,255,.22);background:transparent;color:#fff;font:inherit;font-weight:700;cursor:pointer;touch-action:manipulation}
-.vl-speed button[aria-pressed="true"]{background:#08798c;border-color:#08798c}
+.vl-speed button[aria-pressed="true"]{background:var(--c-primary);border-color:var(--c-primary);color:var(--c-on-primary)}
 .vl-cap{margin-top:8px;background:#0f3a42;border-radius:12px;padding:10px 14px;font-size:clamp(16px,2.2vw,19px);line-height:1.85;font-weight:600;min-height:3.9em}
 .vl-cap b{color:#ffd166}
 .vl-cap .guess{display:block;margin-top:4px;font-size:14px;color:#bfe9ef;font-weight:600}
@@ -93,7 +93,7 @@ CSS = r'''<style>
 .vl-chap{margin-top:10px;display:flex;flex-wrap:wrap;gap:6px}
 .vl-chap button{flex:1 1 auto;min-height:44px;padding:6px 10px;border-radius:11px;border:1px solid rgba(255,255,255,.18);background:rgba(255,255,255,.05);color:#fff;font:inherit;font-size:13.5px;font-weight:600;cursor:pointer;touch-action:manipulation}
 .vl-chap button .tm{display:block;font-size:11px;color:#9fc7cc;font-weight:500}
-.vl-chap button[aria-current="true"]{background:#08798c;border-color:#08798c}
+.vl-chap button[aria-current="true"]{background:var(--c-primary);border-color:var(--c-primary);color:var(--c-on-primary)}
 /* wide screens: video and text side by side */
 .vl-tabs{display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;padding:8px 12px 0;max-width:1400px;margin:0 auto}
 .vl-tabs::-webkit-scrollbar{display:none}

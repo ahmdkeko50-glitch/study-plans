@@ -15,6 +15,8 @@ Follow it and you get the same result every time:
 
 ---
 
+> **Theme rule:** every lab file supports `?theme=ta3leem|eschool` (default ta3leem). See `THEME.md`, apply it with `tools/theme.py` (`build.py` already does), and never hard-code brand colours or fonts in JS: use `window.LAB_TC`.
+
 ## 0. The two ways to apply it
 
 | | What you edit | When |
