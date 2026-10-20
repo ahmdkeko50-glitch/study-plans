@@ -6,7 +6,7 @@
   - `?theme=ta3leem|eschool` is read from `location.search` only, by an inline script at the top of `<head>`; the default is `ta3leem`.
   - Never use localStorage or cookies for the theme.
   - JS-drawn colours and fonts come from `window.LAB_TC`; never hard-code `#08798c` / `0x08798c` / `Alexandria` in JS.
-  - The page, 3D scene and video-player backgrounds are the same in both themes.
+  - The page, 3D scene and video-player backgrounds are the same in both themes. The video player is white, with the video in a frame; only the buttons follow the brand.
   - Carry `?theme=` onto any internal link.
   - New or rebuilt lab files go through `labs/tools/theme.py`. `build.py` already runs it.
   - Test the "Done when" list in THEME.md.

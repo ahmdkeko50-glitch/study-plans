@@ -35,9 +35,10 @@ a 3D material) has to follow it.
    **Never hard-code `#08798c` / `0x08798c` / `#04525f` or `Alexandria` in JS.** Use `LAB_TC`.
    In CSS, use the variables (`--c-primary`, `--c-primary-ink` for primary-coloured text, `--c-on-primary` for text
    on a primary fill, `rgba(var(--c-primary-rgb),a)`).
-7. **The backgrounds do not change between themes.** The page (`--c-bg`), the cards (`--c-paper`), the 3D scene and the
-   video-player overlay stay as they are. Only the brand parts change: primary/accent colours, text colour, font,
-   header bar, logo and footer name.
+7. **The backgrounds are the same in both themes.** The page (`--c-bg`), the cards (`--c-paper`) and the 3D scene stay
+   as they are. The video player is **white** in both themes, with the video in a white frame (border, `--c-tint` ring,
+   soft shadow). Only the brand parts change: buttons and selected states (`--c-primary` with `--c-on-primary` text),
+   primary text colour, font, header bar, logo and footer name.
 
 ## The two themes
 

@@ -71,7 +71,6 @@ html[data-theme="ta3leem"]:not(.hc) .brandbar .code{background:#f6848e;color:#20
 html[data-theme="ta3leem"]:not(.hc) .banner.info{border-color:#b9e6fb}
 html[data-theme="ta3leem"]:not(.hc) .btn.primary:hover{color:#fff}
 html[data-theme="ta3leem"] .brandbar img.logo-e,html:not([data-theme="ta3leem"]) .brandbar img.logo-t{display:none}
-html[data-theme="ta3leem"] .vl-chap button[aria-current="true"] .tm{color:inherit;opacity:.75}
 html[data-theme="ta3leem"] .br-e,html:not([data-theme="ta3leem"]) .br-t{display:none}
 </style>
 '''
