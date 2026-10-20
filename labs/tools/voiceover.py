@@ -8,9 +8,10 @@
 
 - Synthesizes each narration line offline with a sherpa-onnx / Piper voice (voice-dir = an unpacked
   vits-piper-* package from github.com/k2-fsa/sherpa-onnx/releases/tag/tts-models).
-- Line i is spoken at the start of caption i. If a line is longer than its caption's time, the video
-  HOLDS on the last picture of that caption until the line ends (frames are duplicated), and every later
-  caption, reading and chapter time shifts by the same amount.
+- Line i is spoken at the start of caption i. If a line is longer than its caption's time, that part of the
+  video plays SLOWER (up to max_slow = 1.8×, frames repeated evenly) so the motion stays with the words, and only
+  the rest is a hold on its last picture; every later caption, reading and chapter time shifts to match.
+  A line shorter than its caption just leaves a little silence.
 - Writes <out-dir>/frames/f%05d.jpg (symlinks), <out-dir>/timeline.json, <out-dir>/narration.wav.
 """
 import json, os, sys
@@ -40,24 +41,29 @@ else:
     for ln in lines:
         a = tts.generate(ln, sid=0, speed=float(nar.get('speed', 1.0))); sr = a.sample_rate
         x = np.array(a.samples, dtype=np.float32); x /= max(1e-6, np.abs(x).max()); clips.append(x * 0.9)
-# holds: frame index → extra frames inserted before it
-holds = {}
+# timing: when a line needs more time than its caption's segment, the segment is first played SLOWER (each frame shown
+# a little longer, spread evenly, up to MAXS times the original length) so the motion keeps pace with the words;
+# only what is still missing after that is a short hold on the segment's last frame. Shorter lines leave silence.
+MAXS = float(nar.get('max_slow', 1.8))
+F = tl['frames']; counts = np.ones(F, dtype=int); slowed = held = 0
 for i, c in enumerate(cues):
     end = cues[i + 1]['t'] if i + 1 < len(cues) else tl['duration']
-    need = LEAD + len(clips[i]) / sr + GAP
-    if need > end - c['t']:
-        # hold the LAST frame of this caption's segment (not the first frame of the next one, which may already show the next step)
-        f_hold = max(0, min(int(round(end * fps)), tl['frames']) - 1)
-        holds[f_hold] = holds.get(f_hold, 0) + int(np.ceil((need - (end - c['t'])) * fps))
-def new_t(t):   # same frame rounding as the holds, so a caption that starts where a hold was inserted moves with it
-    f = int(round(t * fps)); return (f + sum(n for k, n in holds.items() if k <= f)) / fps
+    fa = min(int(round(c['t'] * fps)), F - 1); fb = max(fa + 1, min(int(round(end * fps)), F)); n = fb - fa
+    need = int(np.ceil((LEAD + len(clips[i]) / sr + GAP) * fps))
+    if need <= n: continue
+    st = min(need, int(n * MAXS)); extra = st - n
+    if extra > 0: np.add.at(counts, fa + (np.arange(extra) * n) // extra, 1); slowed += extra
+    if need > st: counts[fb - 1] += need - st; held += need - st
+cum = np.concatenate([[0], np.cumsum(counts)])
+def new_t(t):   # original time → time in the narrated video (same frame rounding as above)
+    return cum[min(max(int(round(t * fps)), 0), F)] / fps
 # frames
 fo = os.path.join(OUT, 'frames'); os.makedirs(fo, exist_ok=True)
 for f in os.listdir(fo): os.remove(os.path.join(fo, f))
 k = 0
-for f in range(tl['frames']):
+for f in range(F):
     src = os.path.abspath(os.path.join(FR, f'f{f:05d}.jpg'))
-    for _ in range(1 + holds.get(f, 0)):
+    for _ in range(counts[f]):
         os.symlink(src, os.path.join(fo, f'f{k:05d}.jpg')); k += 1
 dur = k / fps
 # audio
@@ -71,4 +77,4 @@ t2 = dict(tl, frames=k, duration=round(dur, 2), narrated=True,
           cues=[dict(c, t=round(new_t(c['t']), 2), say=lines[i]) for i, c in enumerate(cues)],
           reads=[dict(r, t=round(new_t(r['t']), 2)) for r in tl['reads']])
 json.dump(t2, open(os.path.join(OUT, 'timeline.json'), 'w', encoding='utf-8'), ensure_ascii=False)
-print(f'video {tl["duration"]:.1f}s → {dur:.1f}s | holds at {len(holds)} captions (+{sum(holds.values())/fps:.1f}s) | narration {sum(len(c) for c in clips)/sr:.1f}s')
+print(f'video {tl["duration"]:.1f}s → {dur:.1f}s | slowed +{slowed/fps:.1f}s, held +{held/fps:.1f}s | narration {sum(len(c) for c in clips)/sr:.1f}s')

@@ -309,10 +309,12 @@ Text on the player (all fixed Arabic):
 
 ### 9.2 How lines are placed (`voiceover.py`)
 - Line *i* starts `LEAD = 0.15 s` after cue *i* starts.
-- It needs `LEAD + length + GAP (0.35 s)`. If that is longer than the cue's segment, the **picture holds on the segment's last
-  frame**: the frame is repeated as symlinks, by `ceil(missing × fps)` frames.
-- Every later chapter, cue and reading time shifts by the inserted frames. `new_t(t)` uses the same frame rounding as the
-  holds. This matters: with a different rounding, a line spilled into the next caption.
+- It needs `LEAD + length + GAP (0.35 s)`. If that is longer than the cue's segment, the segment is **played slower**:
+  its frames are repeated evenly (up to `max_slow` = 1.8× the segment length) so the motion keeps pace with the words.
+  Only what is still missing after that becomes a short hold on the segment's **last** frame (never the next step's first).
+  A shorter line just leaves some silence.
+- Every later chapter, cue and reading time is mapped through the same frame counts (`new_t(t)`), so captions, readings and
+  the voice stay together.
 - Lesson 1-4: 89 s of picture + 22 s of holds = 111 s.
 
 ### 9.3 Option A: recorded voice (used now) — ElevenLabs «Sufyan»
