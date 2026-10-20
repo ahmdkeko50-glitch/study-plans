@@ -46,8 +46,9 @@ for i, c in enumerate(cues):
     end = cues[i + 1]['t'] if i + 1 < len(cues) else tl['duration']
     need = LEAD + len(clips[i]) / sr + GAP
     if need > end - c['t']:
-        f_end = min(int(round(end * fps)), tl['frames'] - 1)
-        holds[f_end] = holds.get(f_end, 0) + int(np.ceil((need - (end - c['t'])) * fps))
+        # hold the LAST frame of this caption's segment (not the first frame of the next one, which may already show the next step)
+        f_hold = max(0, min(int(round(end * fps)), tl['frames']) - 1)
+        holds[f_hold] = holds.get(f_hold, 0) + int(np.ceil((need - (end - c['t'])) * fps))
 def new_t(t):   # same frame rounding as the holds, so a caption that starts where a hold was inserted moves with it
     f = int(round(t * fps)); return (f + sum(n for k, n in holds.items() if k <= f)) / fps
 # frames

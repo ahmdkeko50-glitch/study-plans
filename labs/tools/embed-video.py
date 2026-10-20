@@ -83,12 +83,12 @@ CSS = r'''<style>
 .vl-cap{margin-top:8px;background:#0f3a42;border-radius:12px;padding:10px 14px;font-size:clamp(16px,2.2vw,19px);line-height:1.85;font-weight:600;min-height:3.9em}
 .vl-cap b{color:#ffd166}
 .vl-cap .guess{display:block;margin-top:4px;font-size:14px;color:#bfe9ef;font-weight:600}
-.vl-read{margin-top:8px;display:flex;gap:8px;overflow-x:auto;scrollbar-width:none;padding-bottom:2px}
+.vl-read{margin-top:8px;display:flex;flex-wrap:wrap;gap:8px}   /* every reading visible (no hidden sideways scroll) */
 .vl-read::-webkit-scrollbar{display:none}
-.vl-read>div{flex:0 0 auto;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);border-radius:12px;padding:6px 12px;min-width:120px}
+.vl-read>div{flex:1 1 140px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);border-radius:12px;padding:6px 12px;min-width:120px}
 .vl-read .hero{background:rgba(104,174,113,.18);border-color:rgba(104,174,113,.5)}
-.vl-read .k{font-size:12px;color:#bfe9ef;white-space:nowrap}
-.vl-read .v{direction:ltr;unicode-bidi:isolate;text-align:right;font-size:17px;font-weight:800;white-space:nowrap}
+.vl-read .k{font-size:12px;color:#bfe9ef}
+.vl-read .v{direction:ltr;unicode-bidi:isolate;text-align:right;font-size:clamp(14px,3.8vw,17px);font-weight:800;white-space:nowrap}
 .vl-read .hero .v{font-size:22px;color:#9be0a5}
 .vl-chap{margin-top:10px;display:flex;flex-wrap:wrap;gap:6px}
 .vl-chap button{flex:1 1 auto;min-height:44px;padding:6px 10px;border-radius:11px;border:1px solid rgba(255,255,255,.18);background:rgba(255,255,255,.05);color:#fff;font:inherit;font-size:13.5px;font-weight:600;cursor:pointer;touch-action:manipulation}
